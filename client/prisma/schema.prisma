@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  buckets  Bucket[]
+  apiKeys  ApiKey[]
+  accesses Access[]
+}
+
+model Bucket {
+  id        String   @id @default(uuid())
+  name      String
+  region    String   @default("us-east-1")
+  ownerId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner   User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  files   File[]
+  accesses Access[]
+
+  @@unique([name, ownerId])
+}
+
+model File {
+  id         String   @id @default(uuid())
+  path       String
+  name       String
+  size       Int      @default(0)
+  mimeType   String   @default("application/octet-stream")
+  isFolder   Boolean  @default(false)
+  bucketId   String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  bucket Bucket @relation(fields: [bucketId], references: [id], onDelete: Cascade)
+
+  @@unique([path, bucketId])
+}
+
+model ApiKey {
+  id        String   @id @default(uuid())
+  name      String
+  key       String   @unique
+  prefix    String
+  userId    String
+  createdAt DateTime @default(now())
+  lastUsed  DateTime?
+  isActive  Boolean  @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Access {
+  id         String     @id @default(uuid())
+  userId     String
+  bucketId   String
+  accessType AccessType @default(READ)
+  createdAt  DateTime   @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bucket Bucket @relation(fields: [bucketId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, bucketId])
+}
+
+enum AccessType {
+  READ
+  WRITE
+  ADMIN
+}
