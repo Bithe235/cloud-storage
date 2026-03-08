@@ -18,10 +18,11 @@ GO_SERVICE="pentaract-go"
 RUST_SERVICE="pentaract-rust"
 NGINX_CONF="/etc/nginx/sites-available/viteapp"
 
-# If in a git repo, pull the latest code to get current fixes
+# Force reset to latest GitHub code to ensure server stays in sync with my fixes
 if [ -d ".git" ]; then
-    echo "Updating codebase from GitHub..."
-    git pull origin main
+    echo "Syncing with GitHub (Force Resetting)..."
+    git fetch origin main
+    git reset --hard origin/main
 fi
 
 echo "[1/5] Installing Debian System Dependencies..."
