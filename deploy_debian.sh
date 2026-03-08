@@ -150,7 +150,7 @@ location_block = \"\"\"
         proxy_read_timeout 300;
     }
 \"\"\"
-
+#
 try:
     with open(conf_file, 'r') as f:
         content = f.read()
