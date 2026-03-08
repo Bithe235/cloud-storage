@@ -29,16 +29,16 @@ echo "[1/5] Installing Debian System Dependencies..."
 sudo apt-get update
 sudo apt-get install -y build-essential pkg-config libssl-dev cmake curl nginx python3
 
-# Force clear old Go version if it's not 1.24 to avoid GOROOT/Path issues
-if [[ $(go version 2>/dev/null) != *"go1.24"* ]]; then
-    echo "Modernizing Go environment (Installing 1.24.0)..."
+# Force clear old Go version if it's not 1.23 to avoid GOROOT/Path issues
+if [[ $(go version 2>/dev/null) != *"go1.23"* ]]; then
+    echo "Modernizing Go environment (Installing 1.23.6)..."
     # Remove apt-installed old versions that cause conflicts
     sudo apt-get remove -y golang-go &>/dev/null || true
     sudo apt-get autoremove -y &>/dev/null || true
     
-    curl -kLO https://go.dev/dl/go1.24.0.linux-amd64.tar.gz
+    curl -kLO https://go.dev/dl/go1.23.6.linux-amd64.tar.gz
     sudo rm -rf /usr/local/go 
-    sudo tar -C /usr/local -xzf go1.24.0.linux-amd64.tar.gz
+    sudo tar -C /usr/local -xzf go1.23.6.linux-amd64.tar.gz
     
     # Force system-wide priority
     sudo rm -f /usr/bin/go /usr/bin/gofmt
@@ -46,8 +46,8 @@ if [[ $(go version 2>/dev/null) != *"go1.24"* ]]; then
     sudo ln -sf /usr/local/go/bin/gofmt /usr/bin/gofmt
     
     export PATH=/usr/local/go/bin:$PATH
-    rm go1.24.0.linux-amd64.tar.gz
-    echo "Go 1.24.0 installed and symlinked as default."
+    rm go1.23.6.linux-amd64.tar.gz
+    echo "Go 1.23.6 installed and symlinked as default."
 fi
 export PATH=/usr/local/go/bin:$PATH
 export GOROOT=/usr/local/go
