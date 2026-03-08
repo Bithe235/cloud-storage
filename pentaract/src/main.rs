@@ -28,6 +28,7 @@ mod storage_manager;
 
 #[tokio::main]
 async fn main() {
+    dotenvy::dotenv().ok();
     let config = Config::new().unwrap();
 
     tracing_subscriber::registry()

@@ -1,0 +1,20 @@
+[2m2026-03-08T16:50:09.640128Z[0m [34mDEBUG[0m [2mpentaract::common::db::pool[0m[2m:[0m established connection with database
+[2m2026-03-08T16:50:09.640903Z[0m [34mDEBUG[0m [2mpentaract::startup[0m[2m:[0m creating database
+[2m2026-03-08T16:50:10.598290Z[0m [34mDEBUG[0m [2mpentaract::startup[0m[2m:[0m database already exists; skipping
+[2m2026-03-08T16:50:12.574522Z[0m [34mDEBUG[0m [2mpentaract::common::db::pool[0m[2m:[0m established connection with database
+[2m2026-03-08T16:50:12.575120Z[0m [34mDEBUG[0m [2mpentaract::startup[0m[2m:[0m initing database
+[2m2026-03-08T16:50:23.114238Z[0m [34mDEBUG[0m [2mpentaract::startup[0m[2m:[0m created superuser
+[2m2026-03-08T16:50:23.115116Z[0m [32m INFO[0m [2mpentaract::server[0m[2m:[0m listening on http://0.0.0.0:8041
+[2m2026-03-08T16:50:23.129526Z[0m [32m INFO[0m [2mpentaract::services::cleanup_worker[0m[2m:[0m [Cleanup Worker] Running orphaned file sweep...
+[2m2026-03-08T16:50:25.139115Z[0m [34mDEBUG[0m [2mpentaract::common::db::pool[0m[2m:[0m established connection with database
+[2m2026-03-08T16:50:25.193141Z[0m [34mDEBUG[0m [2mpentaract[0m[2m:[0m running manager
+vdvdv\Shop Props Pack v1 .1.rar
+[2m2026-03-08T17:08:54.016026Z[0m [34mDEBUG[0m [2mpentaract::services::storage_manager[0m[2m:[0m [TELEGRAM API] uploaded chunk with file_id "BQACAgUAAxkDAAIBTGmtrSURcK8Gs-pNLO5EogZJDyslAAJUIAAC6y1pVa3fC53gLJ-qOgQ" and position "1"
+[2m2026-03-08T17:08:55.210140Z[0m [34mDEBUG[0m [2mpentaract::services::storage_manager[0m[2m:[0m [TELEGRAM API] uploaded chunk with file_id "BQACAgUAAxkDAAIBTWmtrSfBHsxiTwvNvJqjEDjrjdDhAAJVIAAC6y1pVeiXxAOCSKKbOgQ" and position "0"
+Shop Props Pack v1 .1.rar
+[2m2026-03-08T17:09:40.523521Z[0m [34mDEBUG[0m [2mpentaract::services::storage_manager[0m[2m:[0m [TELEGRAM API] uploaded chunk with file_id "BQACAgUAAxkDAAIBTmmtrVSRicSplHodIktEG1MdAn1AAAJWIAAC6y1pVaNyBGv32PWBOgQ" and position "1"
+[2m2026-03-08T17:09:47.532830Z[0m [34mDEBUG[0m [2mpentaract::services::storage_manager[0m[2m:[0m [TELEGRAM API] uploaded chunk with file_id "BQACAgUAAxkDAAIBT2mtrVuNZA0MYnqWbDo1J-2xpMf2AAJXIAAC6y1pVS8UNi1sJ_SYOgQ" and position "0"
+[2m2026-03-08T17:10:09.001801Z[0m [34mDEBUG[0m [2mpentaract::services::storage_manager[0m[2m:[0m [TELEGRAM API] streaming chunk with file_id "f149afdc-08a9-4fed-a1c8-38740c62608e" and position "0"
+[2m2026-03-08T17:10:18.134373Z[0m [34mDEBUG[0m [2mpentaract::services::storage_manager[0m[2m:[0m [TELEGRAM API] streaming chunk with file_id "f149afdc-08a9-4fed-a1c8-38740c62608e" and position "0"
+[2m2026-03-08T17:10:30.185605Z[0m [34mDEBUG[0m [2mpentaract::services::storage_manager[0m[2m:[0m [TELEGRAM API] streaming chunk with file_id "f149afdc-08a9-4fed-a1c8-38740c62608e" and position "0"
+[2m2026-03-08T17:10:31.525321Z[0m [34mDEBUG[0m [2mpentaract::services::storage_manager[0m[2m:[0m [TELEGRAM API] streaming chunk with file_id "f149afdc-08a9-4fed-a1c8-38740c62608e" and position "0"

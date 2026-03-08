@@ -23,15 +23,30 @@ pub struct Config {
 
 impl Config {
     pub fn new() -> PentaractResult<Self> {
-        let db_user: String = Self::get_env_var("DATABASE_USER")?;
-        let db_password: String = Self::get_env_var("DATABASE_PASSWORD")?;
-        let db_name: String = Self::get_env_var("DATABASE_NAME")?;
-        let db_host: String = Self::get_env_var("DATABASE_HOST")?;
-        let db_port: String = Self::get_env_var("DATABASE_PORT")?;
-        let db_uri =
-            { format!("postgres://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}") };
-        let db_uri_without_dbname =
-            { format!("postgres://{db_user}:{db_password}@{db_host}:{db_port}") };
+        let db_uri = if let Ok(url) = env::var("DATABASE_URL") {
+            url
+        } else {
+            let db_user: String = Self::get_env_var("DATABASE_USER")?;
+            let db_password: String = Self::get_env_var("DATABASE_PASSWORD")?;
+            let db_name: String = Self::get_env_var("DATABASE_NAME")?;
+            let db_host: String = Self::get_env_var("DATABASE_HOST")?;
+            let db_port: String = Self::get_env_var("DATABASE_PORT")?;
+            format!("postgres://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}")
+        };
+
+        let db_uri_without_dbname = if let Ok(url) = env::var("DATABASE_URL") {
+            // For Neon/Cloud DBs, we often don't need a "database-less" connection for creation
+            // as the DB already exists or we don't have permission to create others.
+            url.clone()
+        } else {
+            let db_user: String = Self::get_env_var("DATABASE_USER")?;
+            let db_password: String = Self::get_env_var("DATABASE_PASSWORD")?;
+            let db_host: String = Self::get_env_var("DATABASE_HOST")?;
+            let db_port: String = Self::get_env_var("DATABASE_PORT")?;
+            format!("postgres://{db_user}:{db_password}@{db_host}:{db_port}")
+        };
+
+        let db_name = env::var("DATABASE_NAME").unwrap_or_else(|_| "neondb".to_string());
         let port = Self::get_env_var("PORT")?;
         let workers = Self::get_env_var("WORKERS")?;
         let channel_capacity = Self::get_env_var("CHANNEL_CAPACITY")?;
