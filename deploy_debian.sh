@@ -36,9 +36,18 @@ if [[ $(go version 2>/dev/null) != *"go1.23"* ]]; then
     sudo apt-get remove -y golang-go &>/dev/null || true
     sudo apt-get autoremove -y &>/dev/null || true
     
-    curl -kLO https://go.dev/dl/go1.23.6.linux-amd64.tar.gz
+    # Use the more reliable direct Google storage link
+    rm -f go_dist.tar.gz
+    curl -kL -o go_dist.tar.gz https://storage.googleapis.com/golang/go1.23.6.linux-amd64.tar.gz
+    
+    # Validate the file is actually a gzip (not an HTML error page)
+    if [[ ! $(file go_dist.tar.gz) == *"gzip compressed data"* ]]; then
+        echo "Alternative download method (using wget)..."
+        wget --no-check-certificate -O go_dist.tar.gz https://go.dev/dl/go1.23.6.linux-amd64.tar.gz
+    fi
+
     sudo rm -rf /usr/local/go 
-    sudo tar -C /usr/local -xzf go1.23.6.linux-amd64.tar.gz
+    sudo tar -C /usr/local -xzf go_dist.tar.gz
     
     # Force system-wide priority
     sudo rm -f /usr/bin/go /usr/bin/gofmt
@@ -46,7 +55,7 @@ if [[ $(go version 2>/dev/null) != *"go1.23"* ]]; then
     sudo ln -sf /usr/local/go/bin/gofmt /usr/bin/gofmt
     
     export PATH=/usr/local/go/bin:$PATH
-    rm go1.23.6.linux-amd64.tar.gz
+    rm -f go_dist.tar.gz
     echo "Go 1.23.6 installed and symlinked as default."
 fi
 export PATH=/usr/local/go/bin:$PATH
