@@ -64,11 +64,19 @@ export default function BucketFilesPage({ params }: { params: Promise<{ id: stri
 
   const loadFiles = useCallback(async (path: string, search?: string) => {
     try {
+      const cleanPath = path === "/" ? "" : path.replace(/^\/+|\/+$/g, "");
       const query = search
         ? `?search=${encodeURIComponent(search)}`
-        : `?path=${encodeURIComponent(path)}`;
+        : `?path=${encodeURIComponent(cleanPath)}`;
       const data = await apiFetch(`/api/buckets/${bucketId}/files${query}`);
-      setFiles(data.files || []);
+      const rawFiles = Array.isArray(data) ? data : (data.files || []);
+      const mappedFiles = rawFiles.map((f: any) => ({
+        ...f,
+        id: f.id || f.path || Math.random().toString(),
+        isFolder: typeof f.is_file === "boolean" ? !f.is_file : !!f.isFolder,
+        createdAt: f.createdAt || new Date().toISOString(),
+      }));
+      setFiles(mappedFiles);
     } catch (e) {
       console.error(e);
     } finally {
@@ -109,10 +117,11 @@ export default function BucketFilesPage({ params }: { params: Promise<{ id: stri
   const handleUpload = async (fileList: FileList) => {
     setUploading(true);
     try {
+      const uploadPath = currentPath === "/" ? "" : currentPath.replace(/^\/+|\/+$/g, "");
       for (const file of Array.from(fileList)) {
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("path", currentPath);
+        formData.append("path", uploadPath);
         await apiFetch(`/api/buckets/${bucketId}/files`, {
           method: "POST",
           body: formData,
@@ -131,9 +140,10 @@ export default function BucketFilesPage({ params }: { params: Promise<{ id: stri
   const handleCreateFolder = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const folderPath = currentPath === "/" ? "" : currentPath.replace(/^\/+|\/+$/g, "");
       await apiFetch(`/api/buckets/${bucketId}/files`, {
         method: "POST",
-        body: JSON.stringify({ path: currentPath, folderName }),
+        body: JSON.stringify({ path: folderPath, folderName }),
       });
       setShowCreateFolder(false);
       setFolderName("");
@@ -147,7 +157,9 @@ export default function BucketFilesPage({ params }: { params: Promise<{ id: stri
   const handleDelete = async (filePath: string, name: string) => {
     if (!confirm(`Delete "${name}"?`)) return;
     try {
-      await apiFetch(`/api/buckets/${bucketId}/files?path=${encodeURIComponent(filePath)}`, {
+      // Rust paths don't start with '/', strip any leading slash
+      const cleanFilePath = filePath.replace(/^\/+/, "");
+      await apiFetch(`/api/buckets/${bucketId}/files?path=${encodeURIComponent(cleanFilePath)}`, {
         method: "DELETE",
       });
       showToast(`"${name}" deleted`);
@@ -155,6 +167,27 @@ export default function BucketFilesPage({ params }: { params: Promise<{ id: stri
     } catch (e) {
       console.error(e);
     }
+  };
+
+  const handleDownload = (filePath: string, name: string) => {
+    const cleanPath = filePath.replace(/^\/+/, "");
+    const token = localStorage.getItem("token") || "";
+    const url = `http://localhost:8080/api/buckets/${bucketId}/download?path=${encodeURIComponent(cleanPath)}`;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    // Attach auth header via fetch then trigger download
+    fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => r.blob())
+      .then((blob) => {
+        const objUrl = URL.createObjectURL(blob);
+        a.href = objUrl;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(objUrl);
+      })
+      .catch(() => showToast("Download failed"));
   };
 
   // breadcrumb parts
@@ -283,6 +316,12 @@ export default function BucketFilesPage({ params }: { params: Promise<{ id: stri
                   <div className="text-3xl mb-2">{getFileIcon(file.name, false)}</div>
                   <p className="font-semibold text-sm truncate" title={file.name}>{file.name}</p>
                   <p className="text-xs text-[var(--text-muted)]">{formatBytes(file.size)}</p>
+                  <button
+                    onClick={() => handleDownload(file.path, file.name)}
+                    className="mt-2 text-xs text-blue-500 hover:text-blue-700 font-semibold"
+                  >
+                    ⬇️ Download
+                  </button>
                 </div>
               )}
               <button

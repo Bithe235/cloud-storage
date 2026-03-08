@@ -21,13 +21,27 @@ export function useApi() {
                 headers["Content-Type"] = headers["Content-Type"] || "application/json";
             }
 
-            const res = await fetch(url, { ...options, headers });
+            // Prepend Go Backend URI if request is an API call
+            const fetchUrl = url.startsWith("/api") ? `http://localhost:8080${url}` : url;
+
+            const res = await fetch(fetchUrl, { ...options, headers });
 
             if (res.status === 204) return null;
 
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || "Something went wrong");
-            return data;
+            const text = await res.text().catch(() => "");
+            let data: any = null;
+
+            try {
+                if (text) data = JSON.parse(text);
+            } catch (err) {
+                // Response is not JSON
+            }
+
+            if (!res.ok) {
+                throw new Error((data && data.error) || text || `HTTP Error ${res.status}`);
+            }
+
+            return data !== null ? data : text;
         },
         [token]
     );
