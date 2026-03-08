@@ -20,7 +20,7 @@ export function useApi() {
                 headers["Content-Type"] = headers["Content-Type"] || "application/json";
             }
 
-            const fetchUrl = url.startsWith("/api") ? `http://localhost:8080${url}` : url;
+            const fetchUrl = url.startsWith("/api") ? `http://localhost:8040${url}` : url;
 
             const res = await fetch(fetchUrl, { ...options, headers });
 

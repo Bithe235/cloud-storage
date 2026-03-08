@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!activeToken) return;
 
     try {
-      const res = await fetch("http://localhost:8080/api/auth/me", {
+      const res = await fetch("http://localhost:8040/api/auth/me", {
         headers: { "Authorization": `Bearer ${activeToken}` },
       });
       if (res.ok) {
@@ -58,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [refreshUser]);
 
   const login = useCallback(async (email: string, password: string) => {
-    const res = await fetch("http://localhost:8080/api/auth/login", {
+    const res = await fetch("http://localhost:8040/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -77,7 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const register = useCallback(async (email: string, password: string) => {
-    const res = await fetch("http://localhost:8080/api/auth/register", {
+    const res = await fetch("http://localhost:8040/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),

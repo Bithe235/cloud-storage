@@ -22,7 +22,7 @@ export function useApi() {
             }
 
             // Prepend Go Backend URI if request is an API call
-            const fetchUrl = url.startsWith("/api") ? `http://localhost:8080${url}` : url;
+            const fetchUrl = url.startsWith("/api") ? `http://localhost:8040${url}` : url;
 
             const res = await fetch(fetchUrl, { ...options, headers });
 

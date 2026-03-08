@@ -31,7 +31,7 @@ func LoadConfig() *Config {
 
 	port := os.Getenv("GO_PORT")
 	if port == "" {
-		port = "8080"
+		port = "8040"
 	}
 
 	dbUrl := os.Getenv("DATABASE_URL")
@@ -49,7 +49,7 @@ func LoadConfig() *Config {
 
 	pentaractURL := os.Getenv("PENTARACT_API_URL")
 	if pentaractURL == "" {
-		pentaractURL = "http://localhost:8000/api"
+		pentaractURL = "http://localhost:8041/api"
 	}
 
 	nextClientURL := os.Getenv("NEXT_CLIENT_URL")

@@ -35,7 +35,12 @@ func main() {
 	// CORS config
 	r.Use(func(c *gin.Context) {
 		origin := c.GetHeader("Origin")
-		if origin == cfg.NextClientURL || origin == cfg.AdminClientURL {
+		isAllowed := origin == cfg.NextClientURL ||
+			origin == cfg.AdminClientURL ||
+			origin == "https://server.fahadakash.com" ||
+			origin == "http://server.fahadakash.com"
+
+		if isAllowed {
 			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
 		}
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
