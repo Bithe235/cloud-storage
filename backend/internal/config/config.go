@@ -20,7 +20,7 @@ type Config struct {
 }
 
 func LoadConfig() *Config {
-	err := godotenv.Load("../../.env") // Load parent .env if exists
+	err := godotenv.Load("../.env") // Load parent .env if exists
 	if err != nil {
 		log.Println("No .env file found in parent, looking in current dir")
 		godotenv.Load()

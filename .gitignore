@@ -1,0 +1,59 @@
+# =========================
+# Generic & OS Files
+# =========================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# =========================
+# Environment Variables
+# =========================
+.env
+.env.*
+!.env.example
+!.env.template
+
+# =========================
+# Node.js & Frontend (Client/UI)
+# =========================
+node_modules/
+dist/
+build/
+out/
+.next/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =========================
+# Rust (Pentaract)
+# =========================
+target/
+**/*.rs.bk
+*.pdb
+recipe.json
+
+# =========================
+# Go (Backend Bridge)
+# =========================
+*.exe
+backend/bridge.exe
+vendor/
+
+# =========================
+# Docker & Infra
+# =========================
+# .dockerignore
+# docker-compose override files if necessary
+docker-compose.override.yml
+
+# =========================
+# Application Specific
+# =========================
+dev.db
+*.db
+*.sqlite
+*.sqlite3

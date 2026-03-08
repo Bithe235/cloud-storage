@@ -1,0 +1,13 @@
+**/target
+**/node_modules
+**/.git
+**/.env
+**/*.exe
+**/dist
+**/pnpm-lock.yaml
+**/cargo-lock.toml
+**/recipe.json
+**/cloud-computing/backend/bridge.exe
+**/cloud-computing/backend/vendor
+**/cloud-computing/client/out
+**/cloud-computing/client/.next
