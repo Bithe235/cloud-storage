@@ -7,11 +7,11 @@ echo "================================================="
 echo "   Pentaract Auto-Deployment Script (Debian)     "
 echo "================================================="
 
-# Avoid running entirely as root so cargo/go install correctly for the user
-if [ "$EUID" -eq 0 ]; then
-  echo "Please run this script as your regular user (not root). It will prompt for sudo passwords automatically."
-  exit 1
-fi
+# Allow running as root
+# if [ "$EUID" -eq 0 ]; then
+#   echo "Please run this script as your regular user (not root). It will prompt for sudo passwords automatically."
+#   exit 1
+# fi
 
 PROJECT_DIR=$(pwd)
 GO_SERVICE="pentaract-go"
