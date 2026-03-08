@@ -14,6 +14,7 @@ type Config struct {
 	JWTSecret        string
 	PentaractURL     string
 	NextClientURL    string
+	AdminClientURL   string
 	TelegramChatID   int64
 	TelegramBotToken string
 	RustMasterToken  string
@@ -68,12 +69,18 @@ func LoadConfig() *Config {
 	botToken := os.Getenv("TELEGRAM_BOT_TOKEN")
 	masterToken := os.Getenv("RUST_MASTER_TOKEN")
 
+	adminClientURL := os.Getenv("ADMIN_CLIENT_URL")
+	if adminClientURL == "" {
+		adminClientURL = "http://localhost:3002"
+	}
+
 	return &Config{
 		Port:             port,
 		DatabaseURL:      dbUrl,
 		JWTSecret:        jwtSecret,
 		PentaractURL:     pentaractURL,
 		NextClientURL:    nextClientURL,
+		AdminClientURL:   adminClientURL,
 		TelegramChatID:   chatId,
 		TelegramBotToken: botToken,
 		RustMasterToken:  masterToken,

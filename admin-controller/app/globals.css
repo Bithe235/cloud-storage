@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+:root {
+  --background: #fdf6e3;
+  --foreground: #1c1c1c;
+  --primary: #268bd2;
+  --secondary: #859900;
+  --accent: #d33682;
+  --danger: #dc322f;
+  --surface: #ffffff;
+  --border: #1a1a1a;
+  --shadow: #262626;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', sans-serif;
+}
+
+@layer components {
+  .brutalist-card {
+    @apply bg-white border-4 border-[var(--border)] p-6 transition-all duration-200;
+    box-shadow: 8px 8px 0px var(--shadow);
+  }
+
+  .brutalist-card:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 10px 10px 0px var(--shadow);
+  }
+
+  .brutalist-input {
+    @apply w-full border-4 border-[var(--border)] p-3 outline-none transition-all focus:translate-x-[2px] focus:translate-y-[2px] active:shadow-none bg-white font-bold;
+    box-shadow: 4px 4px 0px var(--border);
+  }
+
+  .brutalist-btn {
+    @apply border-4 border-[var(--border)] px-6 py-2 font-bold cursor-pointer transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none inline-flex items-center gap-2;
+    box-shadow: 4px 4px 0px var(--shadow);
+  }
+
+  .brutalist-btn-primary {
+    @apply bg-[var(--primary)] text-white;
+  }
+
+  .brutalist-btn-danger {
+    @apply bg-[var(--danger)] text-white;
+  }
+
+  .brutalist-btn-secondary {
+    @apply bg-[var(--secondary)] text-white;
+  }
+
+  .brutalist-table {
+    @apply w-full border-collapse border-4 border-[var(--border)];
+  }
+
+  .brutalist-table th {
+    @apply border-4 border-[var(--border)] bg-[var(--primary)] text-white p-3 text-left font-black;
+  }
+
+  .brutalist-table td {
+    @apply border-4 border-[var(--border)] p-3 bg-white font-bold;
+  }
+
+  .brutalist-badge {
+    @apply border-2 border-[var(--border)] px-3 py-1 text-xs font-black uppercase inline-block;
+  }
+
+  .sidebar-link {
+    @apply flex items-center gap-3 p-4 border-b-4 border-[var(--border)] font-black hover:bg-yellow-200 transition-colors;
+  }
+}

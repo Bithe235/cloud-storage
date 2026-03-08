@@ -10,6 +10,8 @@ type User struct {
 	Password      string    `gorm:"column:password_hash;not null" json:"-"`
 	PlanID        string    `gorm:"default:'plan_free'" json:"planId"`
 	PlanExpiresAt time.Time `json:"planExpiresAt"`
+	Role          string    `gorm:"default:'user'" json:"role"` // admin or user
+	IsBanned      bool      `gorm:"default:false" json:"isBanned"`
 	CreatedAt     time.Time `json:"createdAt"`
 	Buckets       []Bucket  `gorm:"foreignKey:OwnerId;references:ID" json:"buckets,omitempty"`
 	ApiKeys       []ApiKey  `gorm:"foreignKey:UserId;references:ID" json:"apiKeys,omitempty"`

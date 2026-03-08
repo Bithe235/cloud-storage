@@ -20,7 +20,8 @@ func AuthGuard() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		apiKeyHeader := c.GetHeader("X-API-Key")
-		var tokenString string
+		var userId string
+		var permissions string
 
 		// 1. Check API Key first
 		if apiKeyHeader != "" {
@@ -36,51 +37,83 @@ func AuthGuard() gin.HandlerFunc {
 			// Update last used
 			now := time.Now()
 			db.DB.Model(&apiKey).Update("last_used", &now)
+			userId = apiKey.UserId
+			permissions = apiKey.Permissions
+		} else {
+			// 2. Fallback to JWT
+			var tokenString string
+			if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
+				tokenString = strings.TrimPrefix(authHeader, "Bearer ")
+			} else {
+				tokenString = c.Query("token")
+			}
 
-			c.Set("userId", apiKey.UserId)
-			c.Set("permissions", apiKey.Permissions)
+			if tokenString == "" {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+				return
+			}
+			cfg := config.LoadConfig()
+
+			token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+				}
+				return []byte(cfg.JWTSecret), nil
+			})
+
+			if err != nil || !token.Valid {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+				return
+			}
+
+			if claims, ok := token.Claims.(jwt.MapClaims); ok {
+				userId = claims["sub"].(string)
+				permissions = "admin" // For dashboard users, we treat them as having all perms unless checked otherwise
+			} else {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+				return
+			}
+		}
+
+		// VERIFY USER IN DB
+		var user models.User
+		if err := db.DB.Where("id = ?", userId).First(&user).Error; err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "User session invalid"})
+			return
+		}
+
+		if user.IsBanned {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Your account has been restricted. Please contact support."})
+			return
+		}
+
+		c.Set("userId", user.ID)
+		c.Set("userRole", user.Role)
+		c.Set("permissions", permissions)
+		c.Next()
+	}
+}
+
+func AdminGuard() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		role, exists := c.Get("userRole")
+		if !exists || role != "admin" {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Forbidden: Admin access required"})
+			return
+		}
+		c.Next()
+	}
+}
+
+func CheckPermission(requiredPerm string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// If user is admin (true admin), allow everything
+		role, _ := c.Get("userRole")
+		if role == "admin" {
 			c.Next()
 			return
 		}
 
-		// 2. Fallback to JWT
-		if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
-			tokenString = strings.TrimPrefix(authHeader, "Bearer ")
-		} else {
-			tokenString = c.Query("token")
-		}
-
-		if tokenString == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-			return
-		}
-		cfg := config.LoadConfig()
-
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-			}
-			return []byte(cfg.JWTSecret), nil
-		})
-
-		if err != nil || !token.Valid {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-			return
-		}
-
-		if claims, ok := token.Claims.(jwt.MapClaims); ok {
-			c.Set("userId", claims["sub"])
-			c.Set("permissions", "admin") // JWT users have full access
-		} else {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
-			return
-		}
-
-		c.Next()
-	}
-}
-func CheckPermission(requiredPerm string) gin.HandlerFunc {
-	return func(c *gin.Context) {
 		perms, exists := c.Get("permissions")
 		if !exists {
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Forbidden: No permissions found"})
@@ -88,12 +121,12 @@ func CheckPermission(requiredPerm string) gin.HandlerFunc {
 		}
 
 		permStr := perms.(string)
-		if permStr == "admin" {
+		if permStr == "admin" { // This "admin" string refers to full permissions for JWT users
 			c.Next()
 			return
 		}
 
-		// Split and check
+		// Split and check for API keys
 		parts := strings.Split(permStr, ",")
 		hasPerm := false
 		for _, p := range parts {

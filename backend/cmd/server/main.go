@@ -31,12 +31,15 @@ func main() {
 
 	r := gin.Default()
 
-	// CORS config (Allow Next.js frontend to communicate)
+	// CORS config
 	r.Use(func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", cfg.NextClientURL)
+		origin := c.GetHeader("Origin")
+		if origin == cfg.NextClientURL || origin == cfg.AdminClientURL {
+			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
+		}
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE, PATCH")
 		c.Writer.Header().Set("Access-Control-Expose-Headers", "Content-Length, Content-Disposition, Content-Type")
 
 		if c.Request.Method == "OPTIONS" {
@@ -82,6 +85,15 @@ func main() {
 			// Billing
 			protected.GET("/billing", handlers.GetBillingInfo)
 			protected.POST("/billing/upgrade", handlers.UpgradePlan)
+
+			// Admin Group
+			admin := protected.Group("/admin")
+			admin.Use(middleware.AdminGuard())
+			{
+				admin.GET("/users", handlers.AdminListUsers)
+				admin.PATCH("/users/:id", handlers.AdminUpdateUserStatus)
+				admin.GET("/users/:id/buckets", handlers.AdminGetUserBuckets)
+			}
 		}
 	}
 

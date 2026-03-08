@@ -58,6 +58,8 @@ func Register(c *gin.Context) {
 	user := models.User{
 		Email:         req.Email,
 		Password:      string(hash),
+		Role:          "user",
+		IsBanned:      false,
 		PlanID:        "plan_free",
 		PlanExpiresAt: time.Now().AddDate(0, 1, 0), // 1 month from now
 	}
