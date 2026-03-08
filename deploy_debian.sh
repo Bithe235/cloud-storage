@@ -29,15 +29,18 @@ echo "[1/5] Installing Debian System Dependencies..."
 sudo apt-get update
 sudo apt-get install -y build-essential pkg-config libssl-dev cmake curl nginx python3
 
-# Install Go if missing
-if ! command -v go &> /dev/null; then
-    echo "Installing Go (1.22.1)..."
-    curl -LO https://go.dev/dl/go1.22.1.linux-amd64.tar.gz
+# Install Go 1.23.6 (Required for slog, slices, maps, cmp packages)
+if [[ $(go version 2>/dev/null) != *"go1.23"* ]]; then
+    echo "Installing/Updating to Go (1.23.6)..."
+    curl -LO https://go.dev/dl/go1.23.6.linux-amd64.tar.gz
     sudo rm -rf /usr/local/go 
-    sudo tar -C /usr/local -xzf go1.22.1.linux-amd64.tar.gz
+    sudo tar -C /usr/local -xzf go1.23.6.linux-amd64.tar.gz
+    # Standardize path
     export PATH=$PATH:/usr/local/go/bin
-    echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
-    rm go1.22.1.linux-amd64.tar.gz
+    if ! grep -q "/usr/local/go/bin" ~/.bashrc; then
+        echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
+    fi
+    rm go1.23.6.linux-amd64.tar.gz
 fi
 export PATH=$PATH:/usr/local/go/bin
 
