@@ -1,41 +1,30 @@
-volumes:
-  pentaract-db-volume:
-    name: pentaract-db-volume
-
-networks:
-  pentaract-network:
-    name: pentaract-network
+version: '3.8'
 
 services:
-  pentaract:
-    container_name: pentaract
-    image: pentaract
-    build: .
-    env_file:
-      - .env
+  # RUST CORE ENGINE (Port 8041)
+  pentaract-rust:
+    container_name: pentaract_rust
+    build:
+      context: ./pentaract
     ports:
-      - ${PORT}:8000
-    restart: unless-stopped
-    depends_on:
-      - db
-    networks:
-      - pentaract-network
+      - "8041:8000"
+    env_file: .env
+    restart: always
 
-  db:
-    container_name: pentaract_db
-    image: postgres:15.0-alpine
-    environment:
-      POSTGRES_USER: ${DATABASE_USER}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+  # GO BACKEND BRIDGE (Port 8040)
+  pentaract-bridge:
+    container_name: pentaract_bridge
+    build:
+      context: ./backend
     ports:
-      - "5432:5432"
-    restart: unless-stopped
-    healthcheck:
-      test: pg_isready --username=${DATABASE_USER} --dbname=${DATABASE_NAME}
-      interval: 10s
-      timeout: 5s
-      retries: 10
-    volumes:
-      - pentaract-db-volume:/var/lib/postgresql/data
-    networks:
-      - pentaract-network
+      - "8040:8040"
+    env_file: .env
+    depends_on:
+      - pentaract-rust
+    environment:
+      - PENTARACT_API_URL=http://pentaract_rust:8000/api
+    restart: always
+
+networks:
+  default:
+    name: pentaract-network
