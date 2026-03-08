@@ -312,3 +312,14 @@ body {
 .code-block .string { color: #4ECDC4; }
 .code-block .comment { color: #666; }
 .code-block .function { color: #45B7D1; }
+
+/* ===== ANIMATIONS ===== */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.animate-shake {
+  animation: shake 0.2s ease-in-out 0s 3;
+}

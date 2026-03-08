@@ -9,15 +9,17 @@ import (
 )
 
 type Config struct {
-	Port             string
-	DatabaseURL      string
-	JWTSecret        string
-	PentaractURL     string
-	NextClientURL    string
-	AdminClientURL   string
-	TelegramChatID   int64
-	TelegramBotToken string
-	RustMasterToken  string
+	Port              string
+	DatabaseURL       string
+	JWTSecret         string
+	PentaractURL      string
+	NextClientURL     string
+	AdminClientURL    string
+	TelegramChatID    int64
+	TelegramBotToken  string
+	RustMasterToken   string
+	MaintenanceMode   bool
+	MaintenanceReason string
 }
 
 func LoadConfig() *Config {

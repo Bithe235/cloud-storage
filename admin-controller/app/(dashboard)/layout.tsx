@@ -46,7 +46,7 @@ export default function DashboardLayout({
           <Link href="/admin/notifications" className="sidebar-link hover:bg-pink-300">
             📣 System Broadcasts
           </Link>
-          <Link href="/admin/settings" className="sidebar-link hover:bg-lavender-200 opacity-50 pointer-events-none">
+          <Link href="/admin/settings" className="sidebar-link hover:bg-purple-200">
             ⚙️ Bridge Config
           </Link>
         </nav>

@@ -21,6 +21,38 @@ type AdminUserRes struct {
 	CreatedAt    string `json:"createdAt"`
 }
 
+var IsMaintenanceMode = false
+var MaintenanceReason = "Scheduled system maintenance in progress."
+
+func AdminToggleMaintenance(c *gin.Context) {
+	var req struct {
+		Enabled bool   `json:"enabled"`
+		Reason  string `json:"reason"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+
+	IsMaintenanceMode = req.Enabled
+	if req.Reason != "" {
+		MaintenanceReason = req.Reason
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"maintenanceMode":   IsMaintenanceMode,
+		"maintenanceReason": MaintenanceReason,
+	})
+}
+
+func AdminGetMaintenanceStatus(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"maintenanceMode":   IsMaintenanceMode,
+		"maintenanceReason": MaintenanceReason,
+	})
+}
+
 func AdminListUsers(c *gin.Context) {
 	var users []models.User
 	if err := db.DB.Order("created_at desc").Find(&users).Error; err != nil {

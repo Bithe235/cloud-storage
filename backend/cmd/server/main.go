@@ -62,7 +62,7 @@ func main() {
 		api.POST("/auth/login", handlers.Login)
 
 		protected := api.Group("")
-		protected.Use(middleware.AuthGuard(), middleware.ExpiryGuard())
+		protected.Use(middleware.AuthGuard(), middleware.ExpiryGuard(), middleware.MaintenanceGuard())
 		{
 			protected.GET("/auth/me", handlers.GetMe)
 
@@ -102,6 +102,10 @@ func main() {
 				// Admin Notifications
 				admin.POST("/notifications", handlers.AdminCreateNotification)
 				admin.GET("/notifications", handlers.AdminListNotifications)
+
+				// Admin Maintenance
+				admin.GET("/maintenance", handlers.AdminGetMaintenanceStatus)
+				admin.POST("/maintenance", handlers.AdminToggleMaintenance)
 			}
 		}
 	}

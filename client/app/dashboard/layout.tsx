@@ -30,13 +30,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const { apiFetch } = useApi();
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [maintenance, setMaintenance] = useState<{ active: boolean; reason: string }>({ active: false, reason: "" });
 
   const fetchNotifications = useCallback(async () => {
     if (!user) return;
     try {
       const data = await apiFetch("/api/notifications");
       setNotifications(data || []);
-    } catch (e) {
+      setMaintenance({ active: false, reason: "" }); // Reset if successful
+    } catch (e: any) {
+      if (e.message.startsWith("MAINTENANCE:")) {
+        setMaintenance({ active: true, reason: e.message.replace("MAINTENANCE:", "").trim() });
+      }
       console.error("Failed to fetch notifications:", e);
     }
   }, [user, apiFetch]);
@@ -76,6 +81,34 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen grid-bg flex">
+      {/* Maintenance Overlay */}
+      {maintenance.active && (
+        <div className="fixed inset-0 z-[100] grid-bg flex items-center justify-center p-4">
+          <div className="brutalist-card !bg-yellow-400 p-8 md:p-12 max-w-2xl w-full text-center border-[6px] shadow-[12px_12px_0_#000] animate-shake">
+            <div className="text-7xl mb-6">🚧</div>
+            <h1 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter mb-4 border-b-[6px] border-black pb-4 text-black">
+              System Lockdown
+            </h1>
+            <div className="!bg-black text-white p-6 brutalist-card-static !shadow-none mb-8">
+              <p className="text-xs uppercase font-black tracking-widest text-yellow-400 mb-2">Notice from Administration:</p>
+              <p className="text-xl font-bold leading-tight text-white">
+                {maintenance.reason || "The system is currently undergoing critical maintenance. Please check back shortly."}
+              </p>
+            </div>
+            <div className="flex flex-col md:flex-row gap-4 justify-center">
+              <button 
+                onClick={() => fetchNotifications()} 
+                className="brutalist-btn bg-black text-white px-10 py-4 text-xl hover:bg-zinc-800 transition-colors"
+                id="maintenance-retry-btn"
+              >
+                RETRY CONNECTION
+              </button>
+            </div>
+            <p className="mt-8 text-xs font-black uppercase opacity-60">Status: BRIDGE_MAINTENANCE_ACTIVE // AUTH_LOCKED</p>
+          </div>
+        </div>
+      )}
+
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div

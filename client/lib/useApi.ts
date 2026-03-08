@@ -38,6 +38,9 @@ export function useApi() {
             }
 
             if (!res.ok) {
+                if (res.status === 503 && data && data.reason) {
+                    throw new Error(`MAINTENANCE: ${data.reason}`);
+                }
                 if (res.status === 403 && data && data.reason) {
                     throw new Error(`BANNED: ${data.reason}`);
                 }
