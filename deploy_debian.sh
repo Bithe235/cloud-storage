@@ -105,6 +105,7 @@ cargo build --release
 
 echo "[3/5] Building Go Bridge API natively..."
 cd "$PROJECT_DIR/backend"
+go mod tidy
 go build -o pentaract-bridge ./cmd/server/main.go
 
 echo "[4/5] Setting up Systemd background Services..."
