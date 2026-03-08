@@ -36,7 +36,7 @@ if [[ $(go version 2>/dev/null) != *"go1.23"* ]]; then
     sudo apt-get remove -y golang-go &>/dev/null || true
     sudo apt-get autoremove -y &>/dev/null || true
     
-    curl -LO https://go.dev/dl/go1.23.6.linux-amd64.tar.gz
+    curl -kLO https://go.dev/dl/go1.23.6.linux-amd64.tar.gz
     sudo rm -rf /usr/local/go 
     sudo tar -C /usr/local -xzf go1.23.6.linux-amd64.tar.gz
     
