@@ -18,6 +18,12 @@ GO_SERVICE="pentaract-go"
 RUST_SERVICE="pentaract-rust"
 NGINX_CONF="/etc/nginx/sites-available/viteapp"
 
+# If in a git repo, pull the latest code to get current fixes
+if [ -d ".git" ]; then
+    echo "Updating codebase from GitHub..."
+    git pull origin main
+fi
+
 echo "[1/5] Installing Debian System Dependencies..."
 sudo apt-get update
 sudo apt-get install -y build-essential pkg-config libssl-dev cmake curl nginx python3
