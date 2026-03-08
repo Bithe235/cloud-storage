@@ -54,7 +54,10 @@ export default function BucketFilesPage({ params }: { params: Promise<{ id: stri
   const [searchQuery, setSearchQuery] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  // Download state machine: per-file tracking
+  const [downloadStates, setDownloadStates] = useState<Record<string, { status: "preparing" | "downloading" | "done" | "error"; progress: number }>>({});
   const [toast, setToast] = useState("");
 
   const showToast = (msg: string) => {
@@ -116,15 +119,35 @@ export default function BucketFilesPage({ params }: { params: Promise<{ id: stri
 
   const handleUpload = async (fileList: FileList) => {
     setUploading(true);
+    setUploadProgress(0);
     try {
       const uploadPath = currentPath === "/" ? "" : currentPath.replace(/^\/+|\/+$/g, "");
+      const token = localStorage.getItem("token") || "";
+
       for (const file of Array.from(fileList)) {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("path", uploadPath);
-        await apiFetch(`/api/buckets/${bucketId}/files`, {
-          method: "POST",
-          body: formData,
+        await new Promise<void>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("POST", `http://localhost:8080/api/buckets/${bucketId}/files`);
+          if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+
+          xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+              const percentComplete = Math.round((event.loaded / event.total) * 100);
+              setUploadProgress(percentComplete);
+            }
+          };
+
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) resolve();
+            else reject(new Error(xhr.responseText || `HTTP ${xhr.status}`));
+          };
+
+          xhr.onerror = () => reject(new Error("XHR Error"));
+
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("path", uploadPath);
+          xhr.send(formData);
         });
       }
       showToast(`Uploaded ${fileList.length} file(s) successfully!`);
@@ -134,6 +157,7 @@ export default function BucketFilesPage({ params }: { params: Promise<{ id: stri
       showToast("Upload failed");
     } finally {
       setUploading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -169,25 +193,22 @@ export default function BucketFilesPage({ params }: { params: Promise<{ id: stri
     }
   };
 
-  const handleDownload = (filePath: string, name: string) => {
+  const getDownloadUrl = (filePath: string) => {
     const cleanPath = filePath.replace(/^\/+/, "");
     const token = localStorage.getItem("token") || "";
-    const url = `http://localhost:8080/api/buckets/${bucketId}/download?path=${encodeURIComponent(cleanPath)}`;
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = name;
-    // Attach auth header via fetch then trigger download
-    fetch(url, { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => r.blob())
-      .then((blob) => {
-        const objUrl = URL.createObjectURL(blob);
-        a.href = objUrl;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(objUrl);
-      })
-      .catch(() => showToast("Download failed"));
+    return `http://localhost:8080/api/buckets/${bucketId}/download?path=${encodeURIComponent(cleanPath)}&token=${encodeURIComponent(token)}`;
+  };
+
+  const renderDownloadButton = (file: FileItem) => {
+    return (
+      <a
+        href={getDownloadUrl(file.path)}
+        download={file.name}
+        className="mt-2 text-xs brutalist-btn brutalist-btn-primary brutalist-btn-sm w-full block text-center"
+      >
+        ⬇️ Download
+      </a>
+    );
   };
 
   // breadcrumb parts
@@ -268,7 +289,7 @@ export default function BucketFilesPage({ params }: { params: Promise<{ id: stri
 
       {/* Drop Zone */}
       <div
-        className={`drop-zone mb-4 ${dragOver ? "drag-over" : ""} ${uploading ? "opacity-50" : ""}`}
+        className={`drop-zone mb-4 flex flex-col items-center justify-center ${dragOver ? "drag-over" : ""} ${uploading ? "opacity-80" : ""}`}
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
         onDrop={(e) => {
@@ -277,11 +298,23 @@ export default function BucketFilesPage({ params }: { params: Promise<{ id: stri
           if (e.dataTransfer.files.length) handleUpload(e.dataTransfer.files);
         }}
       >
-        <div className="text-3xl mb-2">{uploading ? "⏳" : "📤"}</div>
+        <div className="text-4xl mb-2">{uploading ? "⏳" : "📤"}</div>
         <p className="font-semibold text-sm">
-          {uploading ? "Uploading..." : "Drag & drop files here to upload"}
+          {uploading ? "Uploading file..." : "Drag & drop files here to upload"}
         </p>
-        <p className="text-xs text-[var(--text-muted)] mt-1">or use the Upload button above</p>
+        
+        {uploading && uploadProgress !== null && (
+          <div className="w-full max-w-sm mt-4 bg-[var(--surface-color)] border-2 border-[var(--border-color)] h-6 rounded-md overflow-hidden brutalist-shadow-sm">
+            <div 
+              className="bg-[var(--accent-coral)] h-full flex items-center justify-center text-xs font-bold text-white transition-all duration-200 ease-out"
+              style={{ width: `${uploadProgress}%` }}
+            >
+              {uploadProgress}%
+            </div>
+          </div>
+        )}
+        
+        {!uploading && <p className="text-xs text-[var(--text-muted)] mt-1">or use the Upload button above</p>}
       </div>
 
       {/* File Listing */}
@@ -316,12 +349,7 @@ export default function BucketFilesPage({ params }: { params: Promise<{ id: stri
                   <div className="text-3xl mb-2">{getFileIcon(file.name, false)}</div>
                   <p className="font-semibold text-sm truncate" title={file.name}>{file.name}</p>
                   <p className="text-xs text-[var(--text-muted)]">{formatBytes(file.size)}</p>
-                  <button
-                    onClick={() => handleDownload(file.path, file.name)}
-                    className="mt-2 text-xs text-blue-500 hover:text-blue-700 font-semibold"
-                  >
-                    ⬇️ Download
-                  </button>
+                  {renderDownloadButton(file)}
                 </div>
               )}
               <button
@@ -369,10 +397,21 @@ export default function BucketFilesPage({ params }: { params: Promise<{ id: stri
                   <td className="p-3 text-xs text-[var(--text-muted)]">
                     {new Date(file.createdAt).toLocaleDateString()}
                   </td>
-                  <td className="p-3">
+                  <td className="p-3 flex items-center gap-2">
+                    {!file.isFolder && (
+                      <a
+                        href={getDownloadUrl(file.path)}
+                        download={file.name}
+                        className="text-blue-500 hover:text-blue-700 text-sm font-bold flex items-center justify-center p-1"
+                        title="Download"
+                      >
+                        ⬇
+                      </a>
+                    )}
                     <button
                       onClick={() => handleDelete(file.path, file.name)}
-                      className="text-red-500 hover:text-red-700 text-sm font-bold"
+                      className="text-red-500 hover:text-red-700 text-sm font-bold p-1"
+                      title="Delete"
                     >
                       ×
                     </button>

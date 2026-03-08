@@ -64,7 +64,7 @@ func RegisterStorageWorker(storageId string, botToken string) error {
 	url := cfg.PentaractURL + "/storage_workers"
 
 	payload := map[string]interface{}{
-		"name":       "Master Bot",
+		"name":       "Worker-" + storageId,
 		"token":      botToken,
 		"storage_id": storageId,
 	}

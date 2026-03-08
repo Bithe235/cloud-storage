@@ -101,7 +101,9 @@ func CreateBucket(c *gin.Context) {
 
 	cfg := config.LoadConfig()
 
-	pentaractId, err := services.CreatePentaractStorage(req.Name, cfg.TelegramChatID)
+	// Use user ID prefix for Rust storage name to ensure global uniqueness for the master account
+	rustStorageName := userId + "-" + req.Name
+	pentaractId, err := services.CreatePentaractStorage(rustStorageName, cfg.TelegramChatID)
 	if err != nil {
 		log.Println("Pentaract Storage Create Error:", err)
 		c.JSON(http.StatusBadGateway, gin.H{"error": "Failed to provision underlying storage engine"})

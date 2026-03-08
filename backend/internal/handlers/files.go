@@ -3,8 +3,12 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
+	"log"
+	"mime"
 	"net/http"
+	"path/filepath"
 	"strings"
 
 	"pentaract-bridge/internal/config"
@@ -160,6 +164,9 @@ func DeleteFile(c *gin.Context) {
 	c.DataFromReader(resp.StatusCode, resp.ContentLength, resp.Header.Get("Content-Type"), resp.Body, nil)
 }
 
+// DownloadFile fetches the full file from Rust (which reassembles Telegram chunks),
+// buffers it, then sends it to the client with correct Content-Length, Content-Type,
+// and Content-Disposition headers so browsers and IDM can show filesize and progress.
 func DownloadFile(c *gin.Context) {
 	userId := c.MustGet("userId").(string)
 	bucketId := c.Param("id")
@@ -187,24 +194,54 @@ func DownloadFile(c *gin.Context) {
 	client := &http.Client{Timeout: 0} // no timeout for large files
 	resp, err := client.Do(req)
 	if err != nil {
+		log.Println("Download proxy error:", err)
 		c.JSON(http.StatusBadGateway, gin.H{"error": "Failed to reach storage engine"})
 		return
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		log.Printf("Download Rust error %d: %s", resp.StatusCode, string(bodyBytes))
 		c.JSON(resp.StatusCode, gin.H{"error": "File not found or download failed"})
 		return
 	}
 
-	// Forward content-disposition and content-type from Rust
-	contentType := resp.Header.Get("Content-Type")
-	if contentType == "" {
-		contentType = "application/octet-stream"
+	// Query the exact file size from the Rust database to avoid buffering
+	var fileSize int64
+	if err := db.DB.Table("files").Select("size").Where("storage_id = ? AND path = ?", storageId, path).Scan(&fileSize).Error; err != nil {
+		fileSize = 0 // Fallback if size lookup fails
 	}
-	contentDisposition := resp.Header.Get("Content-Disposition")
-	if contentDisposition != "" {
-		c.Header("Content-Disposition", contentDisposition)
+
+	// Determine filename and Content-Type
+	filename := filepath.Base(path)
+	if filename == "" || filename == "." {
+		filename = "download.bin"
 	}
-	c.DataFromReader(http.StatusOK, resp.ContentLength, contentType, resp.Body, nil)
+	ct := mime.TypeByExtension(filepath.Ext(filename))
+	if ct == "" {
+		ct = "application/octet-stream"
+	}
+
+	// Set headers BEFORE streaming
+	c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
+	c.Header("Content-Type", ct)
+	if fileSize > 0 {
+		c.Header("Content-Length", fmt.Sprintf("%d", fileSize))
+	} else if resp.ContentLength > 0 {
+		c.Header("Content-Length", fmt.Sprintf("%d", resp.ContentLength))
+	}
+	c.Header("Accept-Ranges", "bytes")
+
+	// Write HTTP status Code
+	c.Writer.WriteHeader(http.StatusOK)
+
+	// Stream directly from Rust response to Client — NO BUFFERING!
+	// This reduces the "Preparing chunks..." time because the browser starts
+	// receiving bytes the millisecond Rust sends its first byte
+	_, err = io.Copy(c.Writer, resp.Body)
+	if err != nil {
+		log.Println("Download stream error:", err)
+		return
+	}
 }
