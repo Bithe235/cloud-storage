@@ -46,8 +46,24 @@ export default function LoginPage() {
           <p className="text-[var(--text-muted)] text-sm mb-6">Sign in to your account</p>
 
           {error && (
-            <div className="bg-red-50 border-[3px] border-red-400 text-red-700 px-4 py-3 rounded-md mb-4 text-sm font-medium">
-              {error}
+            <div className={`border-[4px] p-4 mb-6 font-bold shadow-[4px_4px_0px_rgba(0,0,0,1)] ${
+              error.startsWith("RESTRICTED:") 
+              ? "bg-red-600 text-white border-black animate-shake" 
+              : "bg-red-50 border-red-400 text-red-700"
+            }`}>
+              <div className="flex items-center gap-2">
+                <span className="text-xl">
+                  {error.startsWith("RESTRICTED:") ? "🚫" : "🚨"}
+                </span>
+                <div className="flex-1">
+                  <p className="uppercase text-xs font-black tracking-widest mb-1">
+                    {error.startsWith("RESTRICTED:") ? "ACCOUNT RESTRICTED" : "SECURITY ALERT"}
+                  </p>
+                  <p className="text-sm">
+                    {error.startsWith("RESTRICTED:") ? error.replace("RESTRICTED:", "").trim() : error}
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 

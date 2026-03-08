@@ -23,6 +23,7 @@ func main() {
 		&models.Bucket{},
 		&models.File{},
 		&models.ApiKey{},
+		&models.Notification{},
 	)
 	if err != nil {
 		log.Fatalf("Failed to auto migrate: %v", err)
@@ -86,6 +87,10 @@ func main() {
 			protected.GET("/billing", handlers.GetBillingInfo)
 			protected.POST("/billing/upgrade", handlers.UpgradePlan)
 
+			// Notifications
+			protected.GET("/notifications", handlers.GetNotifications)
+			protected.PATCH("/notifications/:id/read", handlers.MarkNotificationRead)
+
 			// Admin Group
 			admin := protected.Group("/admin")
 			admin.Use(middleware.AdminGuard())
@@ -93,6 +98,10 @@ func main() {
 				admin.GET("/users", handlers.AdminListUsers)
 				admin.PATCH("/users/:id", handlers.AdminUpdateUserStatus)
 				admin.GET("/users/:id/buckets", handlers.AdminGetUserBuckets)
+
+				// Admin Notifications
+				admin.POST("/notifications", handlers.AdminCreateNotification)
+				admin.GET("/notifications", handlers.AdminListNotifications)
 			}
 		}
 	}

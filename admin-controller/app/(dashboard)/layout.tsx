@@ -43,6 +43,9 @@ export default function DashboardLayout({
           <Link href="/admin/buckets" className="sidebar-link hover:bg-green-200">
             🪣 System Buckets
           </Link>
+          <Link href="/admin/notifications" className="sidebar-link hover:bg-pink-300">
+            📣 System Broadcasts
+          </Link>
           <Link href="/admin/settings" className="sidebar-link hover:bg-lavender-200 opacity-50 pointer-events-none">
             ⚙️ Bridge Config
           </Link>

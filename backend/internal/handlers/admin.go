@@ -57,7 +57,8 @@ func AdminListUsers(c *gin.Context) {
 func AdminUpdateUserStatus(c *gin.Context) {
 	targetUserId := c.Param("id")
 	var req struct {
-		IsBanned bool `json:"isBanned"`
+		IsBanned  bool   `json:"isBanned"`
+		BanReason string `json:"banReason"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -65,12 +66,17 @@ func AdminUpdateUserStatus(c *gin.Context) {
 		return
 	}
 
-	if err := db.DB.Model(&models.User{}).Where("id = ?", targetUserId).Update("is_banned", req.IsBanned).Error; err != nil {
+	updates := map[string]interface{}{
+		"is_banned":  req.IsBanned,
+		"ban_reason": req.BanReason,
+	}
+
+	if err := db.DB.Model(&models.User{}).Where("id = ?", targetUserId).Updates(updates).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user status"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "User status updated", "isBanned": req.IsBanned})
+	c.JSON(http.StatusOK, gin.H{"message": "User status updated", "isBanned": req.IsBanned, "banReason": req.BanReason})
 }
 
 func AdminGetUserBuckets(c *gin.Context) {
@@ -83,4 +89,39 @@ func AdminGetUserBuckets(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, buckets)
+}
+
+func AdminCreateNotification(c *gin.Context) {
+	var req struct {
+		UserId  *string `json:"userId"`
+		Message string  `json:"message" binding:"required"`
+		Type    string  `json:"type" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request properties"})
+		return
+	}
+
+	notification := models.Notification{
+		UserId:  req.UserId,
+		Message: req.Message,
+		Type:    req.Type,
+	}
+
+	if err := db.DB.Create(&notification).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create notification"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, notification)
+}
+
+func AdminListNotifications(c *gin.Context) {
+	var notifications []models.Notification
+	if err := db.DB.Order("created_at desc").Find(&notifications).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch notifications"})
+		return
+	}
+	c.JSON(http.StatusOK, notifications)
 }

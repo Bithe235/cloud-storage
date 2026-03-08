@@ -64,7 +64,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       body: JSON.stringify({ email, password }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error);
+    if (!res.ok) {
+      if (res.status === 403 && data.reason) {
+        throw new Error(`RESTRICTED: ${data.reason}`);
+      }
+      throw new Error(data.error || "Login failed");
+    }
     setToken(data.token);
     setUser(data.user);
     localStorage.setItem("token", data.token);

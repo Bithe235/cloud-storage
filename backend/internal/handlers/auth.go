@@ -70,6 +70,14 @@ func Register(c *gin.Context) {
 		return
 	}
 
+	// Send Welcome Notification
+	welcomeMsg := models.Notification{
+		UserId:  &user.ID,
+		Message: "Welcome to Pentaract! We are excited to have you on board.",
+		Type:    "info",
+	}
+	db.DB.Create(&welcomeMsg)
+
 	token, _ := generateToken(&user)
 	c.JSON(http.StatusCreated, gin.H{"user": user, "token": token})
 }
@@ -89,6 +97,14 @@ func Login(c *gin.Context) {
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		return
+	}
+
+	if user.IsBanned {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error":  "Your account is restricted",
+			"reason": user.BanReason,
+		})
 		return
 	}
 

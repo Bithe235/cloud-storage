@@ -83,7 +83,10 @@ func AuthGuard() gin.HandlerFunc {
 		}
 
 		if user.IsBanned {
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Your account has been restricted. Please contact support."})
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+				"error":  "Your account has been restricted.",
+				"reason": user.BanReason,
+			})
 			return
 		}
 

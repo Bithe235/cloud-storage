@@ -40,11 +40,22 @@ export default function UsersPage() {
   }, []);
 
   const toggleBan = async (user: AdminUser) => {
-    if (!confirm(`Are you sure you want to ${user.isBanned ? 'unban' : 'ban'} ${user.email}?`)) return;
+    const action = user.isBanned ? 'unban' : 'ban';
+    if (!confirm(`Are you sure you want to ${action} ${user.email}?`)) return;
+
+    let reason = "";
+    if (action === 'ban') {
+      reason = window.prompt("Enter the reason for THIS RESTRICTION (shown to user):", "Violation of system policies") || "";
+      if (!reason) {
+        alert("A reason is REQUIRED for security logs.");
+        return;
+      }
+    }
+
     try {
       await apiFetch(`/api/admin/users/${user.id}`, {
         method: "PATCH",
-        body: JSON.stringify({ isBanned: !user.isBanned }),
+        body: JSON.stringify({ isBanned: !user.isBanned, banReason: reason }),
       });
       fetchUsers();
     } catch (err) {

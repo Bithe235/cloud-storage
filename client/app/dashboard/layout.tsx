@@ -3,7 +3,16 @@
 import { useAuth } from "../context/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useApi } from "../../lib/useApi";
+
+interface Notification {
+  id: string;
+  message: string;
+  type: string;
+  isRead: boolean;
+  createdAt: string;
+}
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview", icon: "📊" },
@@ -19,11 +28,38 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const { apiFetch } = useApi();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  const fetchNotifications = useCallback(async () => {
+    if (!user) return;
+    try {
+      const data = await apiFetch("/api/notifications");
+      setNotifications(data || []);
+    } catch (e) {
+      console.error("Failed to fetch notifications:", e);
+    }
+  }, [user, apiFetch]);
+
   useEffect(() => {
     if (!isLoading && !user) {
       router.push("/login");
+    } else if (user) {
+      fetchNotifications();
+      // Polling every 60 seconds
+      const interval = setInterval(fetchNotifications, 60000);
+      return () => clearInterval(interval);
     }
-  }, [user, isLoading, router]);
+  }, [user, isLoading, router, fetchNotifications]);
+
+  const markAsRead = async (id: string) => {
+    try {
+      await apiFetch(`/api/notifications/${id}/read`, { method: "PATCH" });
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -131,6 +167,42 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
 
         <main className="flex-1 p-6 md:p-8">
+          {/* Notifications Area */}
+          <div className="mb-6 space-y-3">
+            {notifications.filter(n => !n.isRead).map((n) => (
+              <div
+                key={n.id}
+                className={`flex items-center justify-between p-4 border-[3px] border-black brutalist-card-static !shadow-none ${
+                  n.type === "error" || n.type === "alert" ? "bg-red-50 border-red-600" :
+                  n.type === "warning" ? "bg-orange-50 border-orange-600" : "bg-blue-50 border-blue-600"
+                }`}
+              >
+                <div className="flex gap-3 items-start">
+                  <span className="text-xl">
+                    {n.type === "error" || n.type === "alert" ? "🚨" : n.type === "warning" ? "⚠️" : "📢"}
+                  </span>
+                  <div>
+                    <p className={`font-bold text-sm ${
+                      n.type === "error" || n.type === "alert" ? "text-red-700" :
+                      n.type === "warning" ? "text-orange-700" : "text-blue-700"
+                    }`}>
+                      {n.message}
+                    </p>
+                    <p className="text-[10px] opacity-60 font-medium">
+                      {new Date(n.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => markAsRead(n.id)}
+                  className="text-xs font-black uppercase hover:underline ml-4 whitespace-nowrap"
+                >
+                  Dismiss
+                </button>
+              </div>
+            ))}
+          </div>
+
           {children}
         </main>
       </div>

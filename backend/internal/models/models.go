@@ -12,9 +12,19 @@ type User struct {
 	PlanExpiresAt time.Time `json:"planExpiresAt"`
 	Role          string    `gorm:"default:'user'" json:"role"` // admin or user
 	IsBanned      bool      `gorm:"default:false" json:"isBanned"`
+	BanReason     string    `json:"banReason"`
 	CreatedAt     time.Time `json:"createdAt"`
 	Buckets       []Bucket  `gorm:"foreignKey:OwnerId;references:ID" json:"buckets,omitempty"`
 	ApiKeys       []ApiKey  `gorm:"foreignKey:UserId;references:ID" json:"apiKeys,omitempty"`
+}
+
+type Notification struct {
+	ID        string    `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
+	UserId    *string   `gorm:"type:uuid;index" json:"userId"` // NULL means global broadcast
+	Message   string    `gorm:"not null" json:"message"`
+	Type      string    `gorm:"default:'info'" json:"type"` // info, warning, error, alert
+	IsRead    bool      `gorm:"default:false" json:"isRead"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 type Bucket struct {
