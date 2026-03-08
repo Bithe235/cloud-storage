@@ -11,6 +11,11 @@ PROJECT_DIR=$(pwd)
 GO_SERVICE="pentaract-go"
 RUST_SERVICE="pentaract-rust"
 
+# Set Go Environment
+export PATH=/usr/local/go/bin:$PATH
+export GOROOT=/usr/local/go
+export GOPATH=$HOME/go
+
 echo "[1/4] Pulling latest code from GitHub..."
 git pull origin main
 
