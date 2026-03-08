@@ -2,7 +2,9 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useApi } from "@/lib/useApi";
+import { formatBytes } from "@/utils/format";
 import Link from "next/link";
+import { useAuth } from "../../context/AuthContext";
 
 interface Bucket {
   id: string;
@@ -13,15 +15,10 @@ interface Bucket {
   totalSize: number;
 }
 
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
-}
+
 
 export default function BucketsPage() {
+  const { user } = useAuth();
   const { apiFetch } = useApi();
   const [buckets, setBuckets] = useState<Bucket[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,6 +47,13 @@ export default function BucketsPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    
+    // Safety check for expiration
+    if (user?.planExpiresAt && new Date(user.planExpiresAt) < new Date()) {
+      setError("Your plan has expired. You cannot create new buckets until you renew.");
+      return;
+    }
+
     setCreating(true);
     try {
       await apiFetch("/api/buckets", {

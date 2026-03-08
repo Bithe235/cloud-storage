@@ -56,8 +56,10 @@ func Register(c *gin.Context) {
 	}
 
 	user := models.User{
-		Email:    req.Email,
-		Password: string(hash),
+		Email:         req.Email,
+		Password:      string(hash),
+		PlanID:        "plan_free",
+		PlanExpiresAt: time.Now().AddDate(0, 1, 0), // 1 month from now
 	}
 
 	if err := db.DB.Create(&user).Error; err != nil {
@@ -92,4 +94,17 @@ func Login(c *gin.Context) {
 
 	user.Password = ""
 	c.JSON(http.StatusOK, gin.H{"user": user, "token": token})
+}
+
+func GetMe(c *gin.Context) {
+	userId := c.MustGet("userId").(string)
+
+	var user models.User
+	if err := db.DB.Where("id = ?", userId).First(&user).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	user.Password = ""
+	c.JSON(http.StatusOK, user)
 }

@@ -1,13 +1,42 @@
 "use client";
 
 import { useAuth } from "@/app/context/AuthContext";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useApi } from "@/lib/useApi";
+import { formatBytes } from "@/utils/format";
 
 export default function SettingsPage() {
   const { user, logout } = useAuth();
+  const { apiFetch } = useApi();
+  const [billing, setBilling] = useState<any>(null);
+  const [counts, setCounts] = useState({ buckets: 0, apiKeys: 0 });
+  const [loading, setLoading] = useState(true);
+
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [billingData, bucketsData, keysData] = await Promise.all([
+          apiFetch("/api/billing"),
+          apiFetch("/api/buckets"),
+          apiFetch("/api/api-keys")
+        ]);
+        setBilling(billingData);
+        setCounts({
+          buckets: bucketsData?.length || 0,
+          apiKeys: keysData?.length || 0
+        });
+      } catch (e) {
+        console.error("Failed to load settings data", e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, [apiFetch]);
 
   const handlePasswordChange = (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,8 +50,19 @@ export default function SettingsPage() {
     setConfirmPassword("");
   };
 
+  const getPlanName = () => {
+    if (user?.planId === "plan_1tb") return "Pro 1TB Monthly";
+    if (user?.planId === "plan_300gb") return "Standard 300GB";
+    if (user?.planId === "plan_100gb") return "Basic 100GB";
+    return "Free 50GB Tier";
+  };
+
+  const storageUsed = billing?.used || 0;
+  const storageLimit = billing?.limit || 53687091200; // 50GB fallback
+  const storagePercent = Math.min(100, (storageUsed / storageLimit) * 100);
+
   return (
-    <div>
+    <div className={loading ? "opacity-50 pointer-events-none" : ""}>
       <h1 className="text-3xl font-bold mb-6">Settings</h1>
 
       <div className="space-y-6 max-w-2xl">
@@ -43,7 +83,9 @@ export default function SettingsPage() {
             <div>
               <label className="text-sm font-semibold text-[var(--text-muted)] block mb-1">Plan</label>
               <div className="flex items-center gap-3">
-                <div className="brutalist-badge bg-[var(--accent-yellow)]">🎓 Student — Free</div>
+                <div className={`brutalist-badge ${user?.planId !== 'plan_free' ? 'bg-[var(--accent-mint)]' : 'bg-[var(--accent-yellow)]'}`}>
+                  {getPlanName()}
+                </div>
               </div>
             </div>
           </div>
@@ -56,9 +98,9 @@ export default function SettingsPage() {
           </h2>
           <div className="space-y-4">
             {[
-              { label: "Storage", used: "0 B", limit: "5 GB", percent: 0, color: "var(--accent-coral)" },
-              { label: "Buckets", used: "0", limit: "10", percent: 0, color: "var(--accent-mint)" },
-              { label: "API Keys", used: "0", limit: "5", percent: 0, color: "var(--accent-lavender)" },
+              { label: "Storage", used: formatBytes(storageUsed), limit: formatBytes(storageLimit), percent: storagePercent, color: "var(--accent-coral)" },
+              { label: "Buckets", used: counts.buckets.toString(), limit: billing?.maxBuckets?.toString() || "3", percent: (counts.buckets / (billing?.maxBuckets || 3)) * 100, color: "var(--accent-mint)" },
+              { label: "API Keys", used: counts.apiKeys.toString(), limit: billing?.maxApiKeys?.toString() || "2", percent: (counts.apiKeys / (billing?.maxApiKeys || 2)) * 100, color: "var(--accent-lavender)" },
             ].map((item, i) => (
               <div key={i}>
                 <div className="flex justify-between text-sm mb-1">

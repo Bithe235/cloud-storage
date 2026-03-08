@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"regexp"
@@ -30,26 +31,25 @@ type BucketRes struct {
 func ListBuckets(c *gin.Context) {
 	userId := c.MustGet("userId").(string)
 
-	var buckets []models.Bucket
-	// GORM preloading is powerful but let's just fetch buckets without counting files for immediate response
-	// The client handles this gracefully
-	err := db.DB.Where("owner_id = ?", userId).Order("created_at desc").Find(&buckets).Error
+	var res []BucketRes
+
+	// Fetch buckets with file counts and total sizes using a join with the engine's files table
+	err := db.DB.Table("cc_buckets").
+		Select("cc_buckets.id, cc_buckets.name, cc_buckets.created_at, COUNT(files.id) as files_count, COALESCE(SUM(files.size), 0) as total_size").
+		Joins("LEFT JOIN files ON cc_buckets.pentaract_id = files.storage_id AND files.is_uploaded = true").
+		Where("cc_buckets.owner_id = ?", userId).
+		Group("cc_buckets.id, cc_buckets.name, cc_buckets.created_at").
+		Order("cc_buckets.created_at desc").
+		Scan(&res).Error
+
 	if err != nil {
 		log.Println("ListBuckets DB Error:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch buckets"})
 		return
 	}
 
-	var res []BucketRes
-	for _, b := range buckets {
-		res = append(res, BucketRes{
-			ID:         b.ID,
-			Name:       b.Name,
-			Region:     "us-east-1", // default since not stored locally
-			CreatedAt:  b.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-			FilesCount: 0,
-			TotalSize:  0,
-		})
+	for i := range res {
+		res[i].Region = "us-east-1"
 	}
 
 	if res == nil {
@@ -62,26 +62,45 @@ func GetBucket(c *gin.Context) {
 	userId := c.MustGet("userId").(string)
 	bucketId := c.Param("id")
 
-	var bucket models.Bucket
-	if err := db.DB.Where("id = ? AND owner_id = ?", bucketId, userId).First(&bucket).Error; err != nil {
+	var res BucketRes
+	err := db.DB.Table("cc_buckets").
+		Select("cc_buckets.id, cc_buckets.name, cc_buckets.created_at, COUNT(files.id) as files_count, COALESCE(SUM(files.size), 0) as total_size").
+		Joins("LEFT JOIN files ON cc_buckets.pentaract_id = files.storage_id AND files.is_uploaded = true").
+		Where("cc_buckets.id = ? AND cc_buckets.owner_id = ?", bucketId, userId).
+		Group("cc_buckets.id, cc_buckets.name, cc_buckets.created_at").
+		Scan(&res).Error
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Bucket not found"})
+		return
+	}
+	if res.ID == "" {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Bucket not found"})
 		return
 	}
 
-	res := BucketRes{
-		ID:         bucket.ID,
-		Name:       bucket.Name,
-		Region:     "us-east-1",
-		CreatedAt:  bucket.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		FilesCount: 0,
-		TotalSize:  0,
-	}
-
+	res.Region = "us-east-1"
 	c.JSON(http.StatusOK, res)
 }
 
 func CreateBucket(c *gin.Context) {
 	userId := c.MustGet("userId").(string)
+
+	// Limit Check
+	var user models.User
+	if err := db.DB.Where("id = ?", userId).First(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "User find error"})
+		return
+	}
+
+	var currentCount int64
+	db.DB.Model(&models.Bucket{}).Where("owner_id = ?", userId).Count(&currentCount)
+
+	limit := GetBucketLimit(user.PlanID)
+	if int(currentCount) >= limit {
+		c.JSON(http.StatusPaymentRequired, gin.H{"error": fmt.Sprintf("Bucket limit reached (%d/%d). Please upgrade your plan.", currentCount, limit)})
+		return
+	}
 
 	var req CreateBucketReq
 	if err := c.ShouldBindJSON(&req); err != nil {

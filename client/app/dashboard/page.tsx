@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useApi } from "@/lib/useApi";
+import { formatBytes } from "@/utils/format";
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
 
@@ -17,13 +18,7 @@ interface ApiKeySummary {
   name: string;
 }
 
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
-}
+
 
 export default function DashboardPage() {
   const { user } = useAuth();

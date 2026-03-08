@@ -2,23 +2,32 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useApi } from "@/lib/useApi";
+import { useAuth } from "../../context/AuthContext";
 
 interface ApiKey {
   id: string;
   name: string;
   prefix: string;
-  key?: string;
+  key?: string; // used for newly created raw key
+  rawKey?: string; // from backend response
+  permissions: string;
   createdAt: string;
   lastUsed: string | null;
   isActive: boolean;
 }
 
 export default function ApiKeysPage() {
+  const { user } = useAuth();
   const { apiFetch } = useApi();
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [newKeyName, setNewKeyName] = useState("");
+  const [permissions, setPermissions] = useState({
+    read: true,
+    write: false,
+    delete: false
+  });
   const [creating, setCreating] = useState(false);
   const [newlyCreated, setNewlyCreated] = useState<ApiKey | null>(null);
   const [copied, setCopied] = useState(false);
@@ -41,18 +50,44 @@ export default function ApiKeysPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (user?.planExpiresAt && new Date(user.planExpiresAt) < new Date()) {
+      alert("Subscription expired! Key generation disabled.");
+      return;
+    }
+
     setCreating(true);
+    
+    // Convert permissions object to comma-separated string
+    const perms = Object.entries(permissions)
+      .filter(([_, val]) => val)
+      .map(([key]) => key)
+      .join(",");
+
     try {
-      const key = await apiFetch("/api/api-keys", {
+      const res = await apiFetch("/api/api-keys", {
         method: "POST",
-        body: JSON.stringify({ name: newKeyName }),
+        body: JSON.stringify({ 
+          name: newKeyName,
+          permissions: perms 
+        }),
       });
-      setNewlyCreated(key);
+      
+      // The backend returns { apiKey: {...}, rawKey: "..." }
+      const newKey = {
+        ...res.apiKey,
+        key: res.rawKey // map rawKey to key for the UI
+      };
+
+      setNewlyCreated(newKey);
       setShowCreate(false);
       setNewKeyName("");
+      // Reset permissions
+      setPermissions({ read: true, write: false, delete: false });
       await loadKeys();
     } catch (e) {
       console.error(e);
+      alert("Failed to create API key");
     } finally {
       setCreating(false);
     }
@@ -153,9 +188,18 @@ export default function ApiKeysPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold">{key.name}</p>
-                    <p className="text-sm font-mono text-[var(--text-muted)]">
-                      {key.prefix}••••••••••••
-                    </p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className="text-sm font-mono text-[var(--text-muted)]">
+                        {key.prefix}••••••••••••
+                      </p>
+                      <div className="flex gap-1">
+                        {key.permissions.split(",").map(p => (
+                          <span key={p} className="text-[9px] font-bold uppercase px-1.5 py-0.5 bg-gray-100 border border-[#1A1A1A] rounded">
+                            {p}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                   <div className="text-right text-xs text-[var(--text-muted)] hidden md:block">
                     <p>Created {new Date(key.createdAt).toLocaleDateString()}</p>
@@ -197,7 +241,7 @@ export default function ApiKeysPage() {
               Include your API key in the Authorization header:
             </p>
             <div className="code-block">
-              <pre>{`Authorization: Bearer YOUR_API_KEY`}</pre>
+              <pre>{`X-API-Key: YOUR_API_KEY`}</pre>
             </div>
           </div>
 
@@ -235,7 +279,7 @@ export default function ApiKeysPage() {
               <div>
                 <p className="text-sm font-semibold mb-2">cURL — List buckets</p>
                 <div className="code-block">
-                  <pre>{`curl -H "Authorization: Bearer YOUR_API_KEY" \\
+                  <pre>{`curl -H "X-API-Key: YOUR_API_KEY" \\
   ${typeof window !== "undefined" ? window.location.origin : "https://your-domain.com"}/api/buckets`}</pre>
                 </div>
               </div>
@@ -251,7 +295,7 @@ BUCKET_ID = "your-bucket-id"
 with open("photo.jpg", "rb") as f:
     response = requests.post(
         f"${typeof window !== "undefined" ? window.location.origin : "https://your-domain.com"}/api/buckets/{BUCKET_ID}/files",
-        headers={"Authorization": f"Bearer {API_KEY}"},
+        headers={"X-API-Key": API_KEY},
         files={"file": f},
         data={"path": "/images/"}
     )
@@ -267,7 +311,7 @@ with open("photo.jpg", "rb") as f:
   {
     method: "POST",
     headers: {
-      "Authorization": "Bearer YOUR_API_KEY",
+      "X-API-Key": "YOUR_API_KEY",
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
@@ -301,11 +345,31 @@ console.log(bucket);`}</pre>
                   placeholder="e.g. My Backend App"
                   required
                 />
-                <p className="text-xs text-[var(--text-muted)] mt-1">
-                  A descriptive name to identify this key
-                </p>
               </div>
-              <div className="flex gap-3">
+
+              <div>
+                <label className="text-sm font-semibold mb-2 block">Permissions</label>
+                <div className="flex flex-col gap-2 p-3 bg-gray-50 border-2 border-[#1A1A1A] rounded">
+                  {Object.entries(permissions).map(([key, val]) => (
+                    <label key={key} className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={val}
+                        onChange={(e) => setPermissions({ ...permissions, [key]: e.target.checked })}
+                        className="w-4 h-4 border-2 border-[#1A1A1A] rounded bg-white checked:bg-[var(--accent-coral)]"
+                      />
+                      <span className="text-sm font-bold capitalize">{key}</span>
+                      <span className="text-xs text-[var(--text-muted)]">
+                        {key === 'read' && "Ability to list and download files"}
+                        {key === 'write' && "Ability to upload and create folders"}
+                        {key === 'delete' && "Ability to remove buckets and files"}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
                 <button type="submit" disabled={creating} className="brutalist-btn brutalist-btn-primary flex-1">
                   {creating ? "Generating..." : "Generate Key"}
                 </button>

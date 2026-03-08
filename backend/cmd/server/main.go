@@ -58,24 +58,30 @@ func main() {
 		api.POST("/auth/login", handlers.Login)
 
 		protected := api.Group("")
-		protected.Use(middleware.AuthGuard())
+		protected.Use(middleware.AuthGuard(), middleware.ExpiryGuard())
 		{
+			protected.GET("/auth/me", handlers.GetMe)
+
 			// Buckets
-			protected.GET("/buckets", handlers.ListBuckets)
-			protected.POST("/buckets", handlers.CreateBucket)
-			protected.GET("/buckets/:id", handlers.GetBucket)
-			protected.DELETE("/buckets/:id", handlers.DeleteBucket)
+			protected.GET("/buckets", middleware.CheckPermission("read"), handlers.ListBuckets)
+			protected.POST("/buckets", middleware.CheckPermission("write"), handlers.CreateBucket)
+			protected.GET("/buckets/:id", middleware.CheckPermission("read"), handlers.GetBucket)
+			protected.DELETE("/buckets/:id", middleware.CheckPermission("delete"), handlers.DeleteBucket)
 
 			// Files (Proxy to Rust)
-			protected.GET("/buckets/:id/files", handlers.ListFiles)
-			protected.POST("/buckets/:id/files", handlers.UploadFile)
-			protected.DELETE("/buckets/:id/files", handlers.DeleteFile)
-			protected.GET("/buckets/:id/download", handlers.DownloadFile)
+			protected.GET("/buckets/:id/files", middleware.CheckPermission("read"), handlers.ListFiles)
+			protected.POST("/buckets/:id/files", middleware.CheckPermission("write"), handlers.UploadFile)
+			protected.DELETE("/buckets/:id/files", middleware.CheckPermission("delete"), handlers.DeleteFile)
+			protected.GET("/buckets/:id/download", middleware.CheckPermission("read"), handlers.DownloadFile)
 
 			// API Keys
 			protected.GET("/api-keys", handlers.ListApiKeys)
 			protected.POST("/api-keys", handlers.CreateApiKey)
 			protected.DELETE("/api-keys/:id", handlers.RevokeApiKey)
+
+			// Billing
+			protected.GET("/billing", handlers.GetBillingInfo)
+			protected.POST("/billing/upgrade", handlers.UpgradePlan)
 		}
 	}
 

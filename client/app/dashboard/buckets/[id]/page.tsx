@@ -2,7 +2,9 @@
 
 import { useEffect, useState, useCallback, use } from "react";
 import { useApi } from "@/lib/useApi";
+import { formatBytes } from "@/utils/format";
 import Link from "next/link";
+import { useAuth } from "../../../context/AuthContext";
 
 interface FileItem {
   id: string;
@@ -20,13 +22,7 @@ interface BucketInfo {
   region: string;
 }
 
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
-}
+
 
 function getFileIcon(name: string, isFolder: boolean): string {
   if (isFolder) return "📁";
@@ -43,6 +39,7 @@ function getFileIcon(name: string, isFolder: boolean): string {
 }
 
 export default function BucketFilesPage({ params }: { params: Promise<{ id: string }> }) {
+  const { user } = useAuth();
   const { id: bucketId } = use(params);
   const { apiFetch } = useApi();
   const [bucket, setBucket] = useState<BucketInfo | null>(null);
@@ -118,6 +115,10 @@ export default function BucketFilesPage({ params }: { params: Promise<{ id: stri
   };
 
   const handleUpload = async (fileList: FileList) => {
+    if (user?.planExpiresAt && new Date(user.planExpiresAt) < new Date()) {
+       showToast("Subscription expired! Uploads disabled.");
+       return;
+    }
     setUploading(true);
     setUploadProgress(0);
     try {
@@ -163,6 +164,10 @@ export default function BucketFilesPage({ params }: { params: Promise<{ id: stri
 
   const handleCreateFolder = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (user?.planExpiresAt && new Date(user.planExpiresAt) < new Date()) {
+       showToast("Subscription expired! Folder creation disabled.");
+       return;
+    }
     try {
       const folderPath = currentPath === "/" ? "" : currentPath.replace(/^\/+|\/+$/g, "");
       await apiFetch(`/api/buckets/${bucketId}/files`, {
@@ -309,7 +314,7 @@ export default function BucketFilesPage({ params }: { params: Promise<{ id: stri
               className="bg-[var(--accent-coral)] h-full flex items-center justify-center text-xs font-bold text-white transition-all duration-200 ease-out"
               style={{ width: `${uploadProgress}%` }}
             >
-              {uploadProgress}%
+              {uploadProgress === 100 ? "Processing on Server..." : `${uploadProgress}%`}
             </div>
           </div>
         )}

@@ -66,9 +66,6 @@ impl<'d> StorageManagerService<'d> {
             .into_iter()
             .collect::<PentaractResult<Vec<_>>>()?;
 
-        // 4. saving chunks to db
-        self.files_repo.create_chunks_batch(chunks).await?;
-
         // 5. marking the file as successfully uploaded
         self.files_repo.set_as_uploaded(data.file_id).await
     }
@@ -94,7 +91,7 @@ impl<'d> StorageManagerService<'d> {
         );
 
         let chunk = FileChunk::new(Uuid::new_v4(), file_id, document.file_id, position as i16);
-        Ok(chunk)
+        self.files_repo.create_chunk(chunk).await
     }
 
     /// Legacy download that buffers all chunks in memory (kept for compatibility)

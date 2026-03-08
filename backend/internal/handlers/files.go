@@ -9,6 +9,7 @@ import (
 	"mime"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"pentaract-bridge/internal/config"
@@ -36,7 +37,7 @@ func ListFiles(c *gin.Context) {
 	cfg := config.LoadConfig()
 	url := cfg.PentaractURL + "/storages/" + storageId + "/files/tree"
 	if path != "" {
-		url += "?path=" + path
+		url += "/" + path
 	}
 
 	req, _ := http.NewRequest("GET", url, nil)
@@ -71,6 +72,21 @@ func UploadFile(c *gin.Context) {
 
 	contentType := c.GetHeader("Content-Type")
 	cfg := config.LoadConfig()
+
+	// Billing check: Limit storage usage based on user's active plan
+	var user models.User
+	if err := db.DB.Where("id = ?", userId).First(&user).Error; err == nil {
+		used := GetUsedStorage(userId)
+		limit := GetPlanLimit(user.PlanID)
+
+		// If Content-Length is provided, include it in the used storage calc to prevent overflow midway
+		contentLength, _ := strconv.ParseInt(c.Request.Header.Get("Content-Length"), 10, 64)
+
+		if used+contentLength > limit {
+			c.JSON(http.StatusPaymentRequired, gin.H{"error": "Storage limit exceeded. Please upgrade your plan."})
+			return
+		}
+	}
 
 	// 1. Detect if it's JSON (Create Folder)
 	if strings.HasPrefix(contentType, "application/json") {

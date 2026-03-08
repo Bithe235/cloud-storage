@@ -5,12 +5,14 @@ import (
 )
 
 type User struct {
-	ID        string    `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
-	Email     string    `gorm:"not null" json:"email"`
-	Password  string    `gorm:"column:password_hash;not null" json:"-"`
-	CreatedAt time.Time `json:"createdAt"`
-	Buckets   []Bucket  `gorm:"foreignKey:OwnerId;references:ID" json:"buckets,omitempty"`
-	ApiKeys   []ApiKey  `gorm:"foreignKey:UserId;references:ID" json:"apiKeys,omitempty"`
+	ID            string    `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
+	Email         string    `gorm:"not null" json:"email"`
+	Password      string    `gorm:"column:password_hash;not null" json:"-"`
+	PlanID        string    `gorm:"default:'plan_free'" json:"planId"`
+	PlanExpiresAt time.Time `json:"planExpiresAt"`
+	CreatedAt     time.Time `json:"createdAt"`
+	Buckets       []Bucket  `gorm:"foreignKey:OwnerId;references:ID" json:"buckets,omitempty"`
+	ApiKeys       []ApiKey  `gorm:"foreignKey:UserId;references:ID" json:"apiKeys,omitempty"`
 }
 
 type Bucket struct {
@@ -37,14 +39,15 @@ type File struct {
 }
 
 type ApiKey struct {
-	ID        string     `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
-	KeyHash   string     `gorm:"uniqueIndex;not null" json:"-"` // We store the hash securely, return raw key once
-	Prefix    string     `gorm:"not null" json:"prefix"`        // pk_xxx... portion returned in queries
-	Name      string     `gorm:"not null" json:"name"`
-	UserId    string     `gorm:"type:uuid;not null;index" json:"userId"`
-	CreatedAt time.Time  `json:"createdAt"`
-	LastUsed  *time.Time `json:"lastUsed"`
-	User      User       `gorm:"foreignKey:UserId;references:ID" json:"user,omitempty"`
+	ID          string     `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
+	KeyHash     string     `gorm:"uniqueIndex;not null" json:"-"` // We store the hash securely, return raw key once
+	Prefix      string     `gorm:"not null" json:"prefix"`        // pk_xxx... portion returned in queries
+	Name        string     `gorm:"not null" json:"name"`
+	Permissions string     `gorm:"default:'read'" json:"permissions"` // comma separated: read,write,delete
+	UserId      string     `gorm:"type:uuid;not null;index" json:"userId"`
+	CreatedAt   time.Time  `json:"createdAt"`
+	LastUsed    *time.Time `json:"lastUsed"`
+	User        User       `gorm:"foreignKey:UserId;references:ID" json:"user,omitempty"`
 }
 
 func (User) TableName() string   { return "cc_users" }

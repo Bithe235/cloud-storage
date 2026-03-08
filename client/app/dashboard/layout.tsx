@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview", icon: "📊" },
   { href: "/dashboard/buckets", label: "Buckets", icon: "🪣" },
   { href: "/dashboard/api-keys", label: "API Keys", icon: "🔑" },
+  { href: "/dashboard/billing", label: "Billing", icon: "💳" },
   { href: "/dashboard/settings", label: "Settings", icon: "⚙️" },
 ];
 
@@ -84,7 +85,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold truncate">{user.email}</p>
-              <p className="text-xs text-[var(--text-muted)]">Free Plan</p>
+              <p className="text-xs text-[var(--text-muted)] font-medium">
+                {user.planId === "plan_1tb" ? "Pro 1TB Plan" : 
+                 user.planId === "plan_300gb" ? "Standard 300GB" :
+                 user.planId === "plan_100gb" ? "Basic 100GB" : "Free 50GB Tier"}
+              </p>
             </div>
           </div>
           <button
@@ -98,6 +103,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-h-screen">
+        {user.planExpiresAt && (
+          new Date(user.planExpiresAt) < new Date() ? (
+            <div className="bg-red-600 text-white p-3 text-center border-b-[3px] border-black font-black uppercase tracking-tighter text-sm">
+              🚨 SYSTEM ALERT: YOUR SUBSCRIPTION EXPIRED ON {new Date(user.planExpiresAt).toLocaleDateString()}. ALL UPLOADS DISABLED. 
+              <Link href="/dashboard/billing" className="ml-3 underline decoration-white decoration-2 underline-offset-4 hover:bg-white hover:text-red-600 transition-colors px-2 py-1">
+                RENEW PLAN NOW →
+              </Link>
+            </div>
+          ) : (
+            <div className="bg-[var(--accent-mint)] text-[#1A1A1A] p-2 text-center border-b-[3px] border-black font-bold text-[10px] uppercase tracking-widest">
+              ✨ Account Current: {Math.max(0, Math.ceil((new Date(user.planExpiresAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))} Days Remaining
+            </div>
+          )
+        )}
+
         {/* Mobile header */}
         <header className="md:hidden border-b-[3px] border-[#1A1A1A] bg-white p-4 flex items-center justify-between sticky top-0 z-20">
           <button

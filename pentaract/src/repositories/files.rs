@@ -167,6 +167,25 @@ impl<'d> FilesRepository<'d> {
         })
     }
 
+    pub async fn create_chunk(&self, chunk: FileChunk) -> PentaractResult<FileChunk> {
+        sqlx::query(
+            format!("INSERT INTO {CHUNKS_TABLE} (id, file_id, telegram_file_id, position) VALUES ($1, $2, $3, $4)")
+                .as_str(),
+        )
+        .bind(chunk.id)
+        .bind(chunk.file_id)
+        .bind(&chunk.telegram_file_id)
+        .bind(chunk.position)
+        .execute(self.db)
+        .await
+        .map_err(|e| {
+            tracing::error!("database error in create_chunk: {e}");
+            PentaractError::Unknown
+        })?;
+
+        Ok(chunk)
+    }
+
     pub async fn create_chunks_batch(&self, chunks: Vec<FileChunk>) -> PentaractResult<()> {
         QueryBuilder::new(
             format!("INSERT INTO {CHUNKS_TABLE} (id, file_id, telegram_file_id, position)")

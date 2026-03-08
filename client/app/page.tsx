@@ -15,7 +15,12 @@ export default function Home() {
             <div className="w-8 h-8 bg-[var(--accent-coral)] border-[3px] border-[#1A1A1A] rotate-12 rounded-sm" />
             <span className="text-xl font-bold tracking-tight">Pentaract Cloud</span>
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-6">
+            <div className="hidden md:flex items-center gap-4 font-bold text-sm">
+              <Link href="#features" className="hover:text-[var(--accent-coral)] transition-colors">Features</Link>
+              <Link href="#pricing" className="hover:text-[var(--accent-coral)] transition-colors">Pricing</Link>
+            </div>
+            <div className="flex items-center gap-3">
             {user ? (
               <Link href="/dashboard" className="brutalist-btn brutalist-btn-primary">
                 Dashboard →
@@ -30,6 +35,7 @@ export default function Home() {
                 </Link>
               </>
             )}
+            </div>
           </div>
         </div>
       </nav>
@@ -170,6 +176,81 @@ export default function Home() {
               {"\n"}  {"}"}
               {"\n"});
             </pre>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Plans */}
+      <section id="pricing" className="bg-[var(--bg-secondary)] border-t-[3px] border-[#1A1A1A] py-16">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4">Simple, Transparent Pricing</h2>
+            <p className="text-lg text-[var(--text-secondary)]">Start free, upgrade when you need more power.</p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              {
+                name: "Student Tier",
+                storage: "100GB",
+                price: "190",
+                color: "var(--accent-sky)",
+                features: ["Secure Redundant Storage", "Unlimited Buckets", "API Access"],
+                highlight: false
+              },
+              {
+                name: "Pro Builder",
+                storage: "300GB",
+                price: "399",
+                color: "var(--accent-coral)",
+                features: ["Secure Redundant Storage", "Unlimited Buckets", "API Access", "Priority Speed"],
+                highlight: true
+              },
+              {
+                name: "Cloud Master",
+                storage: "1TB",
+                price: "440",
+                color: "var(--accent-lavender)",
+                features: ["Secure Redundant Storage", "Unlimited Buckets", "API Access", "Priority Speed"],
+                highlight: false
+              }
+            ].map((plan, i) => (
+              <div 
+                key={i} 
+                className={`brutalist-card p-8 flex flex-col relative ${plan.highlight ? 'ring-4 ring-[var(--accent-coral)] ring-offset-4 scale-105 z-10' : ''}`}
+                style={{ backgroundColor: 'white' }}
+              >
+                {plan.highlight && (
+                  <div className="absolute top-0 right-0 translate-x-2 -translate-y-2 bg-[var(--accent-coral)] text-white text-xs font-bold px-3 py-1 border-[3px] border-[#1A1A1A] rotate-3">
+                    MOST POPULAR
+                  </div>
+                )}
+                
+                <h3 className="text-2xl font-black mb-2">{plan.name}</h3>
+                <div className="mb-6">
+                  <span className="text-5xl font-black" style={{ color: plan.color }}>{plan.storage}</span>
+                  <div className="text-[var(--text-muted)] font-bold mt-2">
+                    <span className="text-xl">{plan.price} BDT</span> / month
+                  </div>
+                </div>
+                
+                <ul className="space-y-3 mb-8 flex-1 font-semibold text-sm">
+                  {plan.features.map((feature, j) => (
+                    <li key={j} className="flex items-center gap-2">
+                      <span>✅</span> {feature}
+                    </li>
+                  ))}
+                </ul>
+
+                <Link 
+                  href={user ? "/dashboard/billing" : "/register"} 
+                  className={`w-full brutalist-btn text-center ${plan.highlight ? 'brutalist-btn-primary' : 'brutalist-btn-secondary'}`}
+                  style={plan.highlight ? { backgroundColor: plan.color } : {}}
+                >
+                  Purchase Now
+                </Link>
+              </div>
+            ))}
           </div>
         </div>
       </section>
