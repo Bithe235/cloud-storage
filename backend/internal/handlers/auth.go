@@ -277,10 +277,19 @@ func ForgotPassword(c *gin.Context) {
 	})
 
 	cfg := config.LoadConfig()
-	resetLink := cfg.NextClientURL + "/reset-password?token=" + tokenStr
+	// Use production URL fallback if NextClientURL is just localhost
+	baseUrl := cfg.NextClientURL
+	if baseUrl == "http://localhost:3000" || baseUrl == "http://localhost:3001" {
+		baseUrl = "https://cloud-storage-lime.vercel.app"
+	}
+	resetLink := baseUrl + "/reset-password?token=" + tokenStr
 
-	// Send Email
-	go services.SendPasswordResetEmail(user.Email, resetLink)
+	// Send Email - Synchronous to catch errors in logs
+	if err := services.SendPasswordResetEmail(user.Email, resetLink); err != nil {
+		log.Printf("ERROR: Failed to send password reset email to %s: %v", user.Email, err)
+		// We still return success to the UI to stay secure (don't reveal user existence)
+		// but now we'll see the error in our backend console.
+	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "If this email is registered, you will receive a reset link shortly."})
 }
