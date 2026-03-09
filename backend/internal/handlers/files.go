@@ -100,12 +100,20 @@ func UploadFile(c *gin.Context) {
 	// Billing check: Limit storage usage based on user's active plan
 	var user models.User
 	if err := db.DB.Where("id = ?", userId).First(&user).Error; err == nil {
+		plan := GetPlan(user.PlanID)
 		used := GetUsedStorage(userId)
-		limit := GetPlanLimit(user.PlanID)
+		limit := plan.Limit
 
 		// If Content-Length is provided, include it in the used storage calc to prevent overflow midway
 		contentLength, _ := strconv.ParseInt(c.Request.Header.Get("Content-Length"), 10, 64)
 
+		// 1. Check if single file exceeds plan's max file size
+		if plan.MaxFileSize > 0 && contentLength > plan.MaxFileSize {
+			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("File too large. Your plan allows up to %s per file.", formatBytes(plan.MaxFileSize))})
+			return
+		}
+
+		// 2. Check if total storage limit would be exceeded
 		if used+contentLength > limit {
 			c.JSON(http.StatusPaymentRequired, gin.H{"error": "Storage limit exceeded. Please upgrade your plan."})
 			return

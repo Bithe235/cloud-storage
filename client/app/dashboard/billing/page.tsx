@@ -10,6 +10,7 @@ interface Plan {
   name: string;
   priceBDT: number;
   limit: number;
+  maxFileSize: number;
 }
 
 interface BillingInfo {
@@ -251,6 +252,7 @@ export default function BillingPage() {
                 <li className="flex items-center gap-1.5 underline decoration-[var(--accent-coral)]">
                   📁 {formatBytes(plan.limit)} Storage
                 </li>
+                <li className="flex items-center gap-1.5 text-[var(--text-secondary)]">🗄️ {formatBytes(plan.maxFileSize)} per file</li>
                 <li className="flex items-center gap-1.5 text-[var(--text-secondary)]">🛡️ Secure Backup</li>
                 <li className="flex items-center gap-1.5 text-[var(--text-secondary)]">⚡ Fast Retrieval</li>
               </ul>

@@ -53,6 +53,7 @@ export default function BucketFilesPage({ params }: { params: Promise<{ id: stri
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [billing, setBilling] = useState<{ maxFileSize: number } | null>(null);
   // Download state machine: per-file tracking
   const [downloadStates, setDownloadStates] = useState<Record<string, { status: "preparing" | "downloading" | "done" | "error"; progress: number }>>({});
   const [toast, setToast] = useState("");
@@ -87,8 +88,12 @@ export default function BucketFilesPage({ params }: { params: Promise<{ id: stri
   useEffect(() => {
     async function loadBucket() {
       try {
-        const b = await apiFetch(`/api/buckets/${bucketId}`);
+        const [b, bill] = await Promise.all([
+          apiFetch(`/api/buckets/${bucketId}`),
+          apiFetch("/api/billing")
+        ]);
         setBucket(b);
+        setBilling(bill);
       } catch (e) {
         console.error(e);
       }
@@ -122,10 +127,21 @@ export default function BucketFilesPage({ params }: { params: Promise<{ id: stri
     setUploading(true);
     setUploadProgress(0);
     try {
-      const uploadPath = currentPath === "/" ? "" : currentPath.replace(/^\/+|\/+$/g, "");
       const token = localStorage.getItem("token") || "";
+      const filesArray = Array.from(fileList);
 
-      for (const file of Array.from(fileList)) {
+      // Client-side validation: Check max file size
+      if (billing?.maxFileSize) {
+        const tooLarge = filesArray.find(f => f.size > billing.maxFileSize);
+        if (tooLarge) {
+          showToast(`File "${tooLarge.name}" exceeds your plan's ${formatBytes(billing.maxFileSize)} limit.`);
+          setUploading(false);
+          setUploadProgress(null);
+          return;
+        }
+      }
+
+      for (const file of filesArray) {
         await new Promise<void>((resolve, reject) => {
           const xhr = new XMLHttpRequest();
           xhr.open("POST", `${baseUrl}/api/buckets/${bucketId}/files`);

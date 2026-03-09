@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"math"
 	"net/http"
@@ -14,19 +15,20 @@ import (
 )
 
 type Plan struct {
-	ID         string `json:"id"`
-	Name       string `json:"name"`
-	PriceBDT   int    `json:"priceBDT"`
-	Limit      int64  `json:"limit"` // in bytes
-	MaxBuckets int    `json:"maxBuckets"`
-	MaxApiKeys int    `json:"maxApiKeys"`
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	PriceBDT    int    `json:"priceBDT"`
+	Limit       int64  `json:"limit"` // in bytes
+	MaxFileSize int64  `json:"maxFileSize"`
+	MaxBuckets  int    `json:"maxBuckets"`
+	MaxApiKeys  int    `json:"maxApiKeys"`
 }
 
 var BillingPlans = []Plan{
-	{ID: "plan_free", Name: "Free Plan", PriceBDT: 0, Limit: 100 * 1024 * 1024 * 1024, MaxBuckets: 3, MaxApiKeys: 2},
-	{ID: "plan_100gb", Name: "1.5TB Monthly", PriceBDT: 190, Limit: 1500 * 1024 * 1024 * 1024, MaxBuckets: 10, MaxApiKeys: 5},
-	{ID: "plan_300gb", Name: "4TB Monthly", PriceBDT: 299, Limit: 4000 * 1024 * 1024 * 1024, MaxBuckets: 25, MaxApiKeys: 10},
-	{ID: "plan_1tb", Name: "5TB Monthly", PriceBDT: 320, Limit: 5000 * 1024 * 1024 * 1024, MaxBuckets: 100, MaxApiKeys: 50},
+	{ID: "plan_free", Name: "Free Plan", PriceBDT: 0, Limit: 100 * 1024 * 1024 * 1024, MaxFileSize: 100 * 1024 * 1024, MaxBuckets: 3, MaxApiKeys: 2},
+	{ID: "plan_100gb", Name: "1.5TB Monthly", PriceBDT: 190, Limit: 1500 * 1024 * 1024 * 1024, MaxFileSize: 300 * 1024 * 1024, MaxBuckets: 10, MaxApiKeys: 5},
+	{ID: "plan_300gb", Name: "4TB Monthly", PriceBDT: 299, Limit: 4000 * 1024 * 1024 * 1024, MaxFileSize: 2 * 1024 * 1024 * 1024, MaxBuckets: 25, MaxApiKeys: 10},
+	{ID: "plan_1tb", Name: "5TB Monthly", PriceBDT: 320, Limit: 5000 * 1024 * 1024 * 1024, MaxFileSize: 5 * 1024 * 1024 * 1024, MaxBuckets: 100, MaxApiKeys: 50},
 }
 
 func GetPlan(planID string) Plan {
@@ -247,4 +249,17 @@ func UpgradePlan(c *gin.Context) {
 		"creditedDays":  creditedDays,
 		"prorationType": prorationType,
 	})
+}
+
+func formatBytes(b int64) string {
+	const unit = 1024
+	if b < unit {
+		return fmt.Sprintf("%d B", b)
+	}
+	div, exp := int64(unit), 0
+	for n := b / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%.1f %cB", float64(b)/float64(div), "KMGTPE"[exp])
 }
