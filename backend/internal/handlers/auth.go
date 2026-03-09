@@ -276,11 +276,13 @@ func ForgotPassword(c *gin.Context) {
 		"password_reset_expires_at": expr,
 	})
 
+	// Always use the Vercel Frontend for reset links in production
+	baseUrl := "https://cloud-storage-lime.vercel.app"
+
+	// If the config has a specific client URL that ISN'T localhost, use that instead
 	cfg := config.LoadConfig()
-	// Use production URL fallback if NextClientURL is just localhost
-	baseUrl := cfg.NextClientURL
-	if baseUrl == "http://localhost:3000" || baseUrl == "http://localhost:3001" {
-		baseUrl = "https://cloud-storage-lime.vercel.app"
+	if cfg.NextClientURL != "" && cfg.NextClientURL != "http://localhost:3000" && cfg.NextClientURL != "http://localhost:3001" {
+		baseUrl = cfg.NextClientURL
 	}
 	resetLink := baseUrl + "/reset-password?token=" + tokenStr
 
