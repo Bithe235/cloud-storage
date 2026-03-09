@@ -52,7 +52,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             });
 
             // Filter to only direct children
-            files = files.filter((f) => {
+            files = (files as any[]).filter((f: any) => {
                 const relativePath = f.path.slice(normalizedPath.length);
                 // Direct children have no additional slashes (except trailing for folders)
                 const parts = relativePath.replace(/\/$/, "").split("/");
