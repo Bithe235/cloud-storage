@@ -56,5 +56,8 @@ export function useApi() {
         [token]
     );
 
-    return { apiFetch };
+    const envUrl = process.env.NEXT_PUBLIC_API_URL;
+    const baseUrl = envUrl || 'https://server.fahadakash.com/penta';
+
+    return { apiFetch, baseUrl };
 }

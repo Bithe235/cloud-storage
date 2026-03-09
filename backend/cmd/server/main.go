@@ -34,7 +34,11 @@ func main() {
 
 	// CORS config
 	r.Use(func(c *gin.Context) {
-		origin := c.GetHeader("Origin")
+		// Log origin for debugging CORS issues
+		if origin != "" {
+			log.Printf("CORS check: Origin=%s", origin)
+		}
+
 		isAllowed := origin == cfg.NextClientURL ||
 			origin == cfg.AdminClientURL ||
 			origin == "https://server.fahadakash.com" ||
@@ -43,7 +47,10 @@ func main() {
 			origin == "http://localhost:3001" ||
 			origin == "http://localhost:3002" ||
 			origin == "http://localhost:3003" ||
-			origin == "http://127.0.0.1:3000"
+			origin == "http://127.0.0.1:3000" ||
+			origin == "http://127.0.0.1:3001" ||
+			origin == "http://127.0.0.1:3002" ||
+			origin == "http://127.0.0.1:3003"
 
 		if isAllowed {
 			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)

@@ -41,7 +41,7 @@ function getFileIcon(name: string, isFolder: boolean): string {
 export default function BucketFilesPage({ params }: { params: Promise<{ id: string }> }) {
   const { user } = useAuth();
   const { id: bucketId } = use(params);
-  const { apiFetch } = useApi();
+  const { apiFetch, baseUrl } = useApi();
   const [bucket, setBucket] = useState<BucketInfo | null>(null);
   const [files, setFiles] = useState<FileItem[]>([]);
   const [currentPath, setCurrentPath] = useState("/");
@@ -128,7 +128,7 @@ export default function BucketFilesPage({ params }: { params: Promise<{ id: stri
       for (const file of Array.from(fileList)) {
         await new Promise<void>((resolve, reject) => {
           const xhr = new XMLHttpRequest();
-          xhr.open("POST", `http://localhost:8040/api/buckets/${bucketId}/files`);
+          xhr.open("POST", `${baseUrl}/api/buckets/${bucketId}/files`);
           if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
 
           xhr.upload.onprogress = (event) => {
@@ -201,7 +201,7 @@ export default function BucketFilesPage({ params }: { params: Promise<{ id: stri
   const getDownloadUrl = (filePath: string) => {
     const cleanPath = filePath.replace(/^\/+/, "");
     const token = localStorage.getItem("token") || "";
-    return `http://localhost:8040/api/buckets/${bucketId}/download?path=${encodeURIComponent(cleanPath)}&token=${encodeURIComponent(token)}`;
+    return `${baseUrl}/api/buckets/${bucketId}/download?path=${encodeURIComponent(cleanPath)}&token=${encodeURIComponent(token)}`;
   };
 
   const renderDownloadButton = (file: FileItem) => {
