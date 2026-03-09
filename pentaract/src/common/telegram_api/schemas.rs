@@ -24,3 +24,8 @@ pub struct DownloadBodySchema {
 pub struct DownloadSchema {
     pub file_path: String,
 }
+
+#[derive(Deserialize)]
+pub struct ErrorResponseSchema {
+    pub description: Option<String>,
+}

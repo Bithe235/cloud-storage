@@ -55,10 +55,13 @@ impl<'t> TelegramBotApi<'t> {
             .send()
             .await?;
 
-        match response.error_for_status() {
-            // https://stackoverflow.com/a/32679930/12255756
-            Ok(r) => Ok(r.json::<UploadBodySchema>().await?.result.document),
-            Err(e) => Err(e.into()),
+        let status = response.status();
+        if status.is_success() {
+            Ok(response.json::<UploadBodySchema>().await?.result.document)
+        } else {
+            let error_data: ErrorResponseSchema = response.json().await.map_err(|_| PentaractError::TelegramAPIError(status.to_string()))?;
+            let msg = error_data.description.unwrap_or_else(|| status.to_string());
+            Err(PentaractError::TelegramAPIError(msg))
         }
     }
 
@@ -70,14 +73,21 @@ impl<'t> TelegramBotApi<'t> {
         // getting file path
         let token = self.scheduler.get_token(storage_id).await?;
         let url = self.build_url("", "getFile", token);
-        // TODO: add retries with their number taking from env
-        let body: DownloadBodySchema = reqwest::Client::new()
+        
+        let response = reqwest::Client::new()
             .get(url)
             .query(&[("file_id", telegram_file_id)])
             .send()
-            .await?
-            .json()
             .await?;
+        
+        let status = response.status();
+        if !status.is_success() {
+            let error_data: ErrorResponseSchema = response.json().await.map_err(|_| PentaractError::TelegramAPIError(status.to_string()))?;
+            let msg = error_data.description.unwrap_or_else(|| status.to_string());
+            return Err(PentaractError::TelegramAPIError(msg));
+        }
+
+        let body: DownloadBodySchema = response.json().await?;
 
         // downloading the file itself
         let token = self.scheduler.get_token(storage_id).await?;
