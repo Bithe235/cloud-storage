@@ -38,7 +38,12 @@ func main() {
 		isAllowed := origin == cfg.NextClientURL ||
 			origin == cfg.AdminClientURL ||
 			origin == "https://server.fahadakash.com" ||
-			origin == "http://server.fahadakash.com"
+			origin == "http://server.fahadakash.com" ||
+			origin == "http://localhost:3000" ||
+			origin == "http://localhost:3001" ||
+			origin == "http://localhost:3002" ||
+			origin == "http://localhost:3003" ||
+			origin == "http://127.0.0.1:3000"
 
 		if isAllowed {
 			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
