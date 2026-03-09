@@ -104,6 +104,12 @@ MASTER_UUID=17ffbf0e-c1b2-4059-a0ce-5822aa556022
 RUST_MASTER_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Im1hc3RlckBwZW50YXJhY3QubG9jYWwiLCJleHAiOjQ5MjY1ODkwOTQsInN1YiI6IjE3ZmZiZjBlLWMxYjItNDA1OS1hMGNlLTU4MjJhYTU1NjAyMiJ9.-fSBvjSzh-eaY6EaDmxPqvVxcrd1LhmQH0sLM6VDCq4
 NEXT_CLIENT_URL=https://server.fahadakash.com
 ADMIN_CLIENT_URL=https://server.fahadakash.com
+
+# SMTP Settings
+SMTP_HOST=smtp.stackmail.com
+SMTP_PORT=465
+SMTP_USER=storage@fahadakash.com
+SMTP_PASS=Ba91374b7
 EOF
     echo "Successfully generated .env file safely on the server!"
 else
