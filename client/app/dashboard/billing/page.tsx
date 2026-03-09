@@ -56,8 +56,47 @@ export default function BillingPage() {
     loadBillingInfo();
   }, []);
 
+  const getProratedCredit = (plan: Plan): { creditedDays: number; label: string } | null => {
+    if (!billing) return null;
+    const currentPlan = billing.plans.find(p => p.id === billing.planId);
+    if (!currentPlan || !billing.expiresAt || billing.isExpired) return null;
+    if (plan.id === billing.planId) return null;
+
+    const remainingMs = new Date(billing.expiresAt).getTime() - Date.now();
+    const remainingDays = remainingMs / (1000 * 60 * 60 * 24);
+    if (remainingDays <= 0) return null;
+
+    const isUpgrade = plan.priceBDT > currentPlan.priceBDT && currentPlan.priceBDT > 0 && plan.priceBDT > 0;
+    const isDowngrade = plan.priceBDT < currentPlan.priceBDT && plan.priceBDT > 0;
+
+    if (isUpgrade) {
+      const creditedDays = Math.floor((remainingDays * currentPlan.priceBDT) / plan.priceBDT);
+      return { creditedDays, label: `+${creditedDays} bonus days credit included` };
+    }
+    if (isDowngrade) {
+      return { creditedDays: 0, label: `Takes effect after ${billing.daysLeft} days remaining` };
+    }
+    return null;
+  };
+
   const handleUpgrade = async (planId: string) => {
-    if (!confirm("Are you sure you want to upgrade to this plan?")) return;
+    const plan = billing?.plans.find(p => p.id === planId);
+    const currentPlan = billing?.plans.find(p => p.id === billing?.planId);
+    
+    if (!plan || !billing) return;
+
+    // Build a clear confirmation message
+    const isDowngrade = plan.priceBDT > 0 && currentPlan && plan.priceBDT < currentPlan.priceBDT && !billing.isExpired;
+    const credit = getProratedCredit(plan);
+    
+    let confirmMsg = `Switch to ${plan.name}?`;
+    if (isDowngrade) {
+      confirmMsg = `Downgrade to ${plan.name}?\n\nYour current ${currentPlan?.name} will remain active for ${billing.daysLeft} days. The downgrade takes effect when it expires.`;
+    } else if (credit && credit.creditedDays > 0) {
+      confirmMsg = `Upgrade to ${plan.name}?\n\n✨ You have ${billing.daysLeft} days remaining on your current plan.\nWe'll credit ${credit.creditedDays} bonus days to your new plan.\nYour new plan will last ~${30 + credit.creditedDays} days total.`;
+    }
+    
+    if (!confirm(confirmMsg)) return;
     
     setUpdating(true);
     try {
@@ -65,9 +104,18 @@ export default function BillingPage() {
         method: "POST",
         body: JSON.stringify({ planId })
       });
-      showToast("Plan successfully updated!");
-      await refreshUser(); // Sync Global Auth State (Sidebar etc)
-      await loadBillingInfo(); // Sync Local Page State
+
+      if (res.prorationType === "scheduled_downgrade") {
+        showToast(`Downgrade scheduled! ${currentPlan?.name} stays active until it expires.`);
+      } else if (res.prorationType === "none") {
+        showToast("You're already on this plan!");
+      } else if (res.creditedDays > 0) {
+        showToast(`✨ Plan upgraded! ${res.creditedDays} days credited from your old plan.`);
+      } else {
+        showToast("Plan updated successfully!");
+      }
+      await refreshUser();
+      await loadBillingInfo();
     } catch (e: any) {
       console.error(e);
       showToast(e.message || "Error upgrading plan");
@@ -165,6 +213,9 @@ export default function BillingPage() {
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
         {billing.plans.map((plan: Plan) => {
           const isActive = plan.id === billing.planId;
+          const credit = getProratedCredit(plan);
+          const currentPlan = billing.plans.find(p => p.id === billing.planId);
+          const isDowngrade = !isActive && plan.priceBDT > 0 && currentPlan && plan.priceBDT < currentPlan.priceBDT && !billing.isExpired;
           
           return (
             <div 
@@ -180,10 +231,21 @@ export default function BillingPage() {
                 )}
               </div>
               
-              <div className="mb-4">
+              <div className="mb-3">
                 <span className="text-2xl font-bold">{plan.priceBDT === 0 ? "FREE" : plan.priceBDT}</span>
                 {plan.priceBDT > 0 && <span className="font-semibold text-gray-500 text-xs"> BDT/mo</span>}
               </div>
+
+              {/* Proration badge */}
+              {!isActive && credit && (
+                <div className={`mb-3 px-2 py-1.5 border-2 text-[10px] font-black uppercase leading-tight ${
+                  credit.creditedDays > 0 
+                    ? 'bg-green-50 border-green-600 text-green-800' 
+                    : 'bg-orange-50 border-orange-500 text-orange-800'
+                }`}>
+                  {credit.creditedDays > 0 ? '✨' : '⏳'} {credit.label}
+                </div>
+              )}
               
               <ul className="space-y-1 mb-6 flex-1 text-[11px] font-bold">
                 <li className="flex items-center gap-1.5 underline decoration-[var(--accent-coral)]">
@@ -196,9 +258,9 @@ export default function BillingPage() {
               <button
                 onClick={() => handleUpgrade(plan.id)}
                 disabled={isActive || updating}
-                className={`w-full brutalist-btn brutalist-btn-sm ${isActive ? 'bg-gray-100 border-[#CCC] text-gray-400 cursor-not-allowed' : 'brutalist-btn-primary'}`}
+                className={`w-full brutalist-btn brutalist-btn-sm ${isActive ? 'bg-gray-100 border-[#CCC] text-gray-400 cursor-not-allowed' : isDowngrade ? 'bg-orange-100 border-orange-500 text-orange-800' : 'brutalist-btn-primary'}`}
               >
-                {isActive ? 'Current Plan' : plan.priceBDT === 0 ? 'Try Free' : 'Upgrade'}
+                {isActive ? 'Current Plan' : isDowngrade ? 'Schedule Downgrade' : plan.priceBDT === 0 ? 'Switch to Free' : 'Upgrade →'}
               </button>
             </div>
           );

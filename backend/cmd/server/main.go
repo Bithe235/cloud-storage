@@ -76,6 +76,7 @@ func main() {
 	})
 
 	api := r.Group("/api")
+	api.Use(middleware.RateLimitGuard())
 	{
 		api.POST("/auth/register", handlers.Register)
 		api.POST("/auth/login", handlers.Login)
