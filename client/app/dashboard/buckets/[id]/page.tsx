@@ -127,6 +127,7 @@ export default function BucketFilesPage({ params }: { params: Promise<{ id: stri
     setUploading(true);
     setUploadProgress(0);
     try {
+      const uploadPath = currentPath === "/" ? "" : currentPath.replace(/^\/+|\/+$/g, "");
       const token = localStorage.getItem("token") || "";
       const filesArray = Array.from(fileList);
 
