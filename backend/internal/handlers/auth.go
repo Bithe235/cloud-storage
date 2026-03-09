@@ -166,7 +166,14 @@ func VerifyEmail(c *gin.Context) {
 		return
 	}
 
-	if user.EmailVerificationOTP == nil || !strings.EqualFold(*user.EmailVerificationOTP, req.OTP) {
+	log.Printf("DEBUG: VerifyEmail Attempt - Email: [%s], Received OTP: [%s], Stored OTP: [%v]", req.Email, req.OTP, user.EmailVerificationOTP)
+
+	storedOTP := ""
+	if user.EmailVerificationOTP != nil {
+		storedOTP = *user.EmailVerificationOTP
+	}
+
+	if user.EmailVerificationOTP == nil || !strings.EqualFold(strings.TrimSpace(storedOTP), strings.TrimSpace(req.OTP)) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid OTP code"})
 		return
 	}
