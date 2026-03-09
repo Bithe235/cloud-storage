@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"strings"
 
 	"pentaract-bridge/internal/config"
 	"pentaract-bridge/internal/db"
@@ -35,37 +36,49 @@ func main() {
 	// CORS config
 	r.Use(func(c *gin.Context) {
 		origin := c.GetHeader("Origin")
-		// Log origin for debugging CORS issues
-		if origin != "" {
-			log.Printf("CORS check: Origin=%s", origin)
-		}
+		method := c.Request.Method
 
+		// Determine if we should allow this origin
+		allowOrigin := ""
+
+		// Detailed check for allowed origins
 		isAllowed := origin == cfg.NextClientURL ||
 			origin == cfg.AdminClientURL ||
-			origin == "https://server.fahadakash.com" ||
-			origin == "http://server.fahadakash.com" ||
 			origin == "https://cloud-storage-lime.vercel.app" ||
-			origin == "http://localhost:3000" ||
-			origin == "http://localhost:3001" ||
-			origin == "http://localhost:3002" ||
-			origin == "http://localhost:3003" ||
-			origin == "http://127.0.0.1:3000" ||
-			origin == "http://127.0.0.1:3001" ||
-			origin == "http://127.0.0.1:3002" ||
-			origin == "http://127.0.0.1:3003"
+			origin == "https://server.fahadakash.com" ||
+			strings.HasSuffix(origin, ".vercel.app") ||
+			strings.Contains(origin, "fahadakash.com") ||
+			strings.HasPrefix(origin, "http://localhost") ||
+			strings.HasPrefix(origin, "http://127.0.0.1")
 
 		if isAllowed {
-			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
+			allowOrigin = origin
+		} else if origin == "" {
+			allowOrigin = "*" // Fallback for non-browser requests
 		}
-		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+
+		if allowOrigin != "" {
+			c.Writer.Header().Set("Access-Control-Allow-Origin", allowOrigin)
+			// Credentials must NOT be true if origin is "*"
+			if allowOrigin != "*" {
+				c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+			}
+		}
+
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With, X-API-Key")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE, PATCH")
 		c.Writer.Header().Set("Access-Control-Expose-Headers", "Content-Length, Content-Disposition, Content-Type")
 
-		if c.Request.Method == "OPTIONS" {
+		// Handle Preflight
+		if method == "OPTIONS" {
+			if allowOrigin == "" {
+				// Be permissive for preflight to at least let the request through
+				c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+			}
 			c.AbortWithStatus(204)
 			return
 		}
+
 		c.Next()
 	})
 
