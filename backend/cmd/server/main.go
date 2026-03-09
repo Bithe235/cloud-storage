@@ -31,21 +31,24 @@ func main() {
 	}
 	log.Println("AutoMigrate completed.")
 
-	r := gin.Default()
+	r := gin.New()
 
-	// CORS config
+	// 1. Recovery & Logger (CORS should actually be before these to ensure headers sent on error)
+	r.Use(gin.Recovery())
+	r.Use(gin.Logger())
+
+	// 2. ULTRA-ROBUST CORS Middleware
 	r.Use(func(c *gin.Context) {
 		origin := c.GetHeader("Origin")
 		method := c.Request.Method
 
-		// Determine if we should allow this origin
+		// Logic to determine allowed origins
 		allowOrigin := ""
 
-		// Detailed check for allowed origins
+		// Trust list
 		isAllowed := origin == cfg.NextClientURL ||
 			origin == cfg.AdminClientURL ||
 			origin == "https://cloud-storage-lime.vercel.app" ||
-			origin == "https://server.fahadakash.com" ||
 			strings.HasSuffix(origin, ".vercel.app") ||
 			strings.Contains(origin, "fahadakash.com") ||
 			strings.HasPrefix(origin, "http://localhost") ||
@@ -54,27 +57,29 @@ func main() {
 		if isAllowed {
 			allowOrigin = origin
 		} else if origin == "" {
-			allowOrigin = "*" // Fallback for non-browser requests
+			allowOrigin = "*" // Allow non-browser requests
 		}
 
+		// Set headers
 		if allowOrigin != "" {
 			c.Writer.Header().Set("Access-Control-Allow-Origin", allowOrigin)
-			// Credentials must NOT be true if origin is "*"
 			if allowOrigin != "*" {
 				c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 			}
-		}
-
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With, X-API-Key")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE, PATCH")
-		c.Writer.Header().Set("Access-Control-Expose-Headers", "Content-Length, Content-Disposition, Content-Type")
-
-		// Handle Preflight
-		if method == "OPTIONS" {
-			if allowOrigin == "" {
-				// Be permissive for preflight to at least let the request through
+		} else {
+			// Fallback for unauthorized origins to at least allow preflight to pass
+			// if it's an OPTIONS request
+			if method == "OPTIONS" {
 				c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 			}
+		}
+
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, PATCH")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With, X-API-Key")
+		c.Writer.Header().Set("Access-Control-Expose-Headers", "Content-Length, Content-Disposition, Content-Type")
+
+		// Handle Preflight IMMEDIATELY
+		if method == "OPTIONS" {
 			c.AbortWithStatus(204)
 			return
 		}
