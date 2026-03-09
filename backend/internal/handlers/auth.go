@@ -92,7 +92,9 @@ func Register(c *gin.Context) {
 	db.DB.Create(&welcomeMsg)
 
 	// Send OTP Email
-	go services.SendVerificationOTPEmail(user.Email, otpCode)
+	if err := services.SendVerificationOTPEmail(user.Email, otpCode); err != nil {
+		log.Printf("Failed to send welcome OTP email: %v", err)
+	}
 
 	c.JSON(http.StatusCreated, gin.H{"message": "Registration successful. Please verify your email.", "email": user.Email})
 }
@@ -222,7 +224,11 @@ func ResendVerificationOTP(c *gin.Context) {
 		"email_verification_otp_expires_at": &expr,
 	})
 
-	go services.SendVerificationOTPEmail(user.Email, otpCode)
+	// Non-goroutine call to see errors in logs immediately
+	if err := services.SendVerificationOTPEmail(user.Email, otpCode); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send email. Configuration error."})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "A new verification code has been sent."})
 }

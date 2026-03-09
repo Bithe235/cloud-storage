@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"strings"
 
 	"pentaract-bridge/internal/config"
 	"pentaract-bridge/internal/db"
@@ -40,46 +39,23 @@ func main() {
 	// 2. ULTRA-ROBUST CORS Middleware
 	r.Use(func(c *gin.Context) {
 		origin := c.GetHeader("Origin")
-		method := c.Request.Method
 
-		// Logic to determine allowed origins
-		allowOrigin := ""
-
-		// Trust list
-		isAllowed := origin == cfg.NextClientURL ||
-			origin == cfg.AdminClientURL ||
-			origin == "https://cloud-storage-lime.vercel.app" ||
-			strings.HasSuffix(origin, ".vercel.app") ||
-			strings.Contains(origin, "fahadakash.com") ||
-			strings.HasPrefix(origin, "http://localhost") ||
-			strings.HasPrefix(origin, "http://127.0.0.1")
-
-		if isAllowed {
-			allowOrigin = origin
-		} else if origin == "" {
-			allowOrigin = "*" // Allow non-browser requests
-		}
-
-		// Set headers
-		if allowOrigin != "" {
-			c.Writer.Header().Set("Access-Control-Allow-Origin", allowOrigin)
-			if allowOrigin != "*" {
-				c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-			}
+		// ALWAYS ALLOW if origin is set (for development/production flexibility)
+		if origin != "" {
+			c.Header("Access-Control-Allow-Origin", origin)
+			c.Header("Access-Control-Allow-Credentials", "true")
 		} else {
-			// Fallback for unauthorized origins to at least allow preflight to pass
-			// if it's an OPTIONS request
-			if method == "OPTIONS" {
-				c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-			}
+			c.Header("Access-Control-Allow-Origin", "*")
 		}
 
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, PATCH")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With, X-API-Key")
-		c.Writer.Header().Set("Access-Control-Expose-Headers", "Content-Length, Content-Disposition, Content-Type")
+		c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, PATCH")
+		c.Header("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With, X-API-Key")
+		c.Header("Access-Control-Expose-Headers", "Content-Length, Content-Disposition, Content-Type")
+		c.Header("Access-Control-Max-Age", "86400")
 
 		// Handle Preflight IMMEDIATELY
-		if method == "OPTIONS" {
+		if c.Request.Method == "OPTIONS" {
+			log.Printf("CORS Preflight: Method=OPTIONS Origin=%s", origin)
 			c.AbortWithStatus(204)
 			return
 		}
