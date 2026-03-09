@@ -59,6 +59,9 @@ impl From<PentaractError> for (StatusCode, String) {
             PentaractError::DoesNotExist(_) => (StatusCode::NOT_FOUND, e.to_string()),
             PentaractError::HeaderMissed(_)
             | PentaractError::HeaderIsInvalid(..)
+            | PentaractError::InvalidPath
+            | PentaractError::NoStorageWorkers
+            | PentaractError::TelegramAPIError(_)
             | PentaractError::InvalidFolderName => (StatusCode::BAD_REQUEST, e.to_string()),
             _ => {
                 tracing::error!("{e}");

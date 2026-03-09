@@ -88,27 +88,33 @@ impl FilesRouter {
             let (mut file, mut filename, mut path) = (None, None, None);
 
             // parsing
-            while let Some(field) = multipart.next_field().await.unwrap() {
-                let name = field.name().unwrap().to_owned();
+            while let Some(field) = multipart.next_field().await.map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))? {
+                let name = field.name().unwrap_or_default().to_owned();
                 let field_filename = field.file_name().unwrap_or("unnamed").to_owned();
-                let data = field.bytes().await.unwrap();
+                let data = field.bytes().await.map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
 
                 match name.as_str() {
                     "file" => {
                         file = Some(data);
                         filename = Some(field_filename);
                     }
-                    "path" => path = Some(String::from_utf8(data.to_vec()).unwrap()),
-                    // don't give a fuck about other fields
+                    "path" => {
+                        let raw_path = String::from_utf8(data.to_vec())
+                            .map_err(|_| (StatusCode::BAD_REQUEST, "path is not valid UTF-8".to_owned()))?;
+                        
+                        // Strip leading/trailing slashes to ensure it doesn't fail validation
+                        path = Some(raw_path.trim_matches('/').to_string());
+                    }
                     _ => (),
                 }
             }
 
-            let file = file.ok_or((StatusCode::BAD_REQUEST, "file file is required".to_owned()))?;
-            let path = path
-                .ok_or((StatusCode::BAD_REQUEST, "path file is required".to_owned()))
-                .map(|path| Self::construct_path(&path, &filename.unwrap()))??;
-            (file, path)
+            let file = file.ok_or((StatusCode::BAD_REQUEST, "file is required".to_owned()))?;
+            let path_base = path.unwrap_or_default();
+            let fname = filename.ok_or((StatusCode::BAD_REQUEST, "filename is missing".to_owned()))?;
+            let final_path = Self::construct_path(&path_base, &fname)
+                .map_err(|e| <(StatusCode, String)>::from(e))?;
+            (file, final_path)
         };
         let size = file.len() as i64;
         let in_file = InFile::new(path, size, storage_id);
