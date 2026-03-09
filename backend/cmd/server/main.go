@@ -32,11 +32,7 @@ func main() {
 
 	r := gin.New()
 
-	// 1. Recovery & Logger (CORS should actually be before these to ensure headers sent on error)
-	r.Use(gin.Recovery())
-	r.Use(gin.Logger())
-
-	// 2. ULTRA-ROBUST CORS Middleware
+	// 1. ULTRA-ROBUST CORS Middleware (MUST BE FIRST)
 	r.Use(func(c *gin.Context) {
 		origin := c.GetHeader("Origin")
 
@@ -55,13 +51,16 @@ func main() {
 
 		// Handle Preflight IMMEDIATELY
 		if c.Request.Method == "OPTIONS" {
-			log.Printf("CORS Preflight: Method=OPTIONS Origin=%s", origin)
 			c.AbortWithStatus(204)
 			return
 		}
 
 		c.Next()
 	})
+
+	// 2. Recovery & Logger
+	r.Use(gin.Recovery())
+	r.Use(gin.Logger())
 
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{

@@ -284,12 +284,15 @@ func ForgotPassword(c *gin.Context) {
 	}
 	resetLink := baseUrl + "/reset-password?token=" + tokenStr
 
-	// Send Email - Synchronous to catch errors in logs
-	if err := services.SendPasswordResetEmail(user.Email, resetLink); err != nil {
-		log.Printf("ERROR: Failed to send password reset email to %s: %v", user.Email, err)
-		// We still return success to the UI to stay secure (don't reveal user existence)
-		// but now we'll see the error in our backend console.
-	}
+	// Send Email - Background goroutine to prevent the request from hanging
+	// which causes the 502 Bad Gateway if the SMTP server is slow.
+	go func(email, link string) {
+		if err := services.SendPasswordResetEmail(email, link); err != nil {
+			log.Printf("BACKGROUND ERROR: Failed to send reset email to %s: %v", email, err)
+		} else {
+			log.Printf("BACKGROUND SUCCESS: Sent reset email to %s", email)
+		}
+	}(user.Email, resetLink)
 
 	c.JSON(http.StatusOK, gin.H{"message": "If this email is registered, you will receive a reset link shortly."})
 }
