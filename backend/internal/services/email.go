@@ -44,8 +44,6 @@ func SendPasswordResetEmail(toEmail, resetLink string) error {
 func SendVerificationOTPEmail(toEmail, otp string) error {
 	cfg := config.LoadConfig()
 
-	log.Printf("DEBUG: Sending OTP email to=%s host=%s port=%d user=%s", toEmail, cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUser)
-
 	m := gomail.NewMessage()
 	m.SetHeader("From", "Pentaract Cloud <"+cfg.SMTPUser+">")
 	m.SetHeader("To", toEmail)
