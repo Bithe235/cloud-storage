@@ -57,3 +57,7 @@ root\test .txt
 [2m2026-03-09T13:50:43.078471Z[0m [34mDEBUG[0m [2mpentaract::services::storage_manager[0m[2m:[0m [TELEGRAM API] uploaded chunk with file_id "BQACAgUAAxkDAAMUaa7QMk26jZF4nLhMMU0nzctbfbMAAkocAAKloHBVI2mJzegp6xI6BA" and position "0"
 [2m2026-03-09T13:50:46.580288Z[0m [31mERROR[0m [2mpentaract::common::db::errors[0m[2m:[0m error returned from database: update or delete on table "storages" violates foreign key constraint "storage_workers_storage_id_fkey" on table "storage_workers"
 [2m2026-03-09T13:50:46.580855Z[0m [31mERROR[0m [2mpentaract::errors[0m[2m:[0m unknown error
+root\test .txt
+[2m2026-03-09T13:58:03.423166Z[0m [34mDEBUG[0m [2mpentaract::services::storage_manager[0m[2m:[0m [TELEGRAM API] uploaded chunk with file_id "BQACAgUAAxkDAAMWaa7R6o_UxvxAPd-musdZK8SXWNMAAk0cAAKloHBVxKZhohQxFn86BA" and position "0"
+[2m2026-03-09T13:58:06.963811Z[0m [31mERROR[0m [2mpentaract::common::db::errors[0m[2m:[0m error returned from database: update or delete on table "storages" violates foreign key constraint "storage_workers_storage_id_fkey" on table "storage_workers"
+[2m2026-03-09T13:58:06.964546Z[0m [31mERROR[0m [2mpentaract::errors[0m[2m:[0m unknown error
