@@ -334,3 +334,30 @@ func ResetPassword(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Password has been successfully updated."})
 }
+
+func DebugEmail(c *gin.Context) {
+	emailTo := c.Query("to")
+	if emailTo == "" {
+		emailTo = "fahad12345ff8@gmail.com"
+	}
+
+	cfg := config.LoadConfig()
+
+	err := services.SendPasswordResetEmail(emailTo, "https://server.fahadakash.com/debug-test")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":      "failed",
+			"error":       err.Error(),
+			"config_host": cfg.SMTPHost,
+			"config_port": cfg.SMTPPort,
+			"config_user": cfg.SMTPUser,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":      "success",
+		"message":     "Debug email sent safely to " + emailTo,
+		"config_host": cfg.SMTPHost,
+	})
+}
