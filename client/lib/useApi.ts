@@ -22,11 +22,9 @@ export function useApi() {
             }
 
             // Prepend Go Backend URI if request is an API call
-            // Priority: .env > Auto-detect (localhost vs server.fahadakash.com)
+            // Priority: .env > DEFAULT TO PRODUCTION (https://server.fahadakash.com/penta)
             const envUrl = process.env.NEXT_PUBLIC_API_URL;
-            const baseUrl = envUrl || (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-                ? 'http://localhost:8040'
-                : 'https://server.fahadakash.com/penta');
+            const baseUrl = envUrl || 'https://server.fahadakash.com/penta';
 
             const fetchUrl = url.startsWith("/api") ? `${baseUrl}${url}` : url;
 
