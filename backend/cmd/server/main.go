@@ -77,7 +77,6 @@ func main() {
 		api.POST("/auth/reset-password", handlers.ResetPassword)
 		api.POST("/auth/verify-email", handlers.VerifyEmail)
 		api.POST("/auth/resend-verification", handlers.ResendVerificationOTP)
-		api.GET("/auth/debug-email", handlers.DebugEmail)
 
 		protected := api.Group("")
 		protected.Use(middleware.AuthGuard(), middleware.ExpiryGuard(), middleware.MaintenanceGuard())
