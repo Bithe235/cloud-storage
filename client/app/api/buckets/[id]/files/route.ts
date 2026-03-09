@@ -62,7 +62,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
         return Response.json({
             path: dirPath,
-            files: files.map((f) => ({
+            files: (files as any[]).map((f: any) => ({
                 id: f.id,
                 name: f.name,
                 path: f.path,
