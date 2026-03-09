@@ -155,9 +155,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold truncate">{user.email}</p>
               <p className="text-xs text-[var(--text-muted)] font-medium">
-                {user.planId === "plan_1tb" ? "Pro 1TB Plan" : 
-                 user.planId === "plan_300gb" ? "Standard 300GB" :
-                 user.planId === "plan_100gb" ? "Basic 100GB" : "Free 50GB Tier"}
+                {user.planId === "plan_1tb" ? "Elite 5TB Plan" : 
+                 user.planId === "plan_300gb" ? "Business 4TB Plan" :
+                 user.planId === "plan_100gb" ? "Pro 1.5TB Plan" : "Free 100GB Plan"}
               </p>
             </div>
           </div>

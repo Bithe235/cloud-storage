@@ -51,14 +51,14 @@ export default function SettingsPage() {
   };
 
   const getPlanName = () => {
-    if (user?.planId === "plan_1tb") return "Pro 1TB Monthly";
-    if (user?.planId === "plan_300gb") return "Standard 300GB";
-    if (user?.planId === "plan_100gb") return "Basic 100GB";
-    return "Free 50GB Tier";
+    if (user?.planId === "plan_1tb") return "Elite 5TB Plan";
+    if (user?.planId === "plan_300gb") return "Business 4TB Plan";
+    if (user?.planId === "plan_100gb") return "Pro 1.5TB Plan";
+    return "Free 100GB Plan";
   };
 
   const storageUsed = billing?.used || 0;
-  const storageLimit = billing?.limit || 53687091200; // 50GB fallback
+  const storageLimit = billing?.limit || 107374182400; // 100GB fallback
   const storagePercent = Math.min(100, (storageUsed / storageLimit) * 100);
 
   return (
