@@ -53,7 +53,7 @@ export default function BucketFilesPage({ params }: { params: Promise<{ id: stri
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [billing, setBilling] = useState<{ maxFileSize: number } | null>(null);
+  const [billing, setBilling] = useState<any>(null);
   // Download state machine: per-file tracking
   const [downloadStates, setDownloadStates] = useState<Record<string, { status: "preparing" | "downloading" | "done" | "error"; progress: number }>>({});
   const [toast, setToast] = useState("");
@@ -132,7 +132,7 @@ export default function BucketFilesPage({ params }: { params: Promise<{ id: stri
       const filesArray = Array.from(fileList);
 
       // Client-side validation: Check max file size
-      if (billing?.maxFileSize) {
+      if (billing && typeof billing.maxFileSize === 'number') {
         const tooLarge = filesArray.find(f => f.size > billing.maxFileSize);
         if (tooLarge) {
           showToast(`File "${tooLarge.name}" exceeds your plan's ${formatBytes(billing.maxFileSize)} limit.`);
@@ -140,6 +140,11 @@ export default function BucketFilesPage({ params }: { params: Promise<{ id: stri
           setUploadProgress(null);
           return;
         }
+      } else if (!billing) {
+        // Fallback: If billing info is not loaded, we can either wait or use a safe default from the user context if available
+        // For now, we'll allow it and let the server catch it if it's a race condition, 
+        // but it's better to log it.
+        console.warn("Upload started before billing info loaded. Validation delegated to server.");
       }
 
       for (const file of filesArray) {

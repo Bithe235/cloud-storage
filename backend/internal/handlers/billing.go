@@ -109,6 +109,7 @@ func GetBillingInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"planId":       user.PlanID,
 		"limit":        plan.Limit,
+		"maxFileSize":  plan.MaxFileSize,
 		"used":         used,
 		"maxBuckets":   plan.MaxBuckets,
 		"bucketsCount": bucketsCount,
