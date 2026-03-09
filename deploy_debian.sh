@@ -36,19 +36,24 @@ if [[ $(go version 2>/dev/null) != *"go1.24"* ]]; then
     sudo apt-get remove -y golang-go &>/dev/null || true
     sudo apt-get autoremove -y &>/dev/null || true
     
-    # Try different sources for reliability
+    # Try different sources for reliability (Forcing IPv4 as your server has IPv6 issues)
     rm -f go_dist.tar.gz
-    echo "Downloading Go 1.24.0..."
+    echo "Downloading Go 1.24.0 from Google CDN (Forcing IPv4)..."
     
-    # Try direct Google Storage first (usually the most stable)
-    if ! curl -kL -o go_dist.tar.gz https://storage.googleapis.com/golang/go1.24.0.linux-amd64.tar.gz; then
-        echo "Primary download failed. Trying official Go source..."
-        wget --no-check-certificate -O go_dist.tar.gz https://go.dev/dl/go1.24.0.linux-amd64.tar.gz
+    # Official Google CDN usually works best
+    if ! curl -4 -kL -o go_dist.tar.gz https://dl.google.com/go/go1.24.0.linux-amd64.tar.gz; then
+        echo "Primary download failed. Trying alternative mirror..."
+        curl -4 -kL -o go_dist.tar.gz https://go.dev/dl/go1.24.0.linux-amd64.tar.gz
     fi
     
     # Final check before extraction
     if [[ ! $(file go_dist.tar.gz) == *"gzip compressed data"* ]]; then
-        echo "CRITICAL ERROR: Failed to download a valid Go binary. Please check your server's internet connection."
+        echo "Alternative download method (using wget -4)..."
+        wget -4 --no-check-certificate -O go_dist.tar.gz https://dl.google.com/go/go1.24.0.linux-amd64.tar.gz
+    fi
+
+    if [[ ! $(file go_dist.tar.gz) == *"gzip compressed data"* ]]; then
+        echo "CRITICAL ERROR: Failed to download a valid Go binary. Your server's internet or firewall is blocking the download."
         exit 1
     fi
 
