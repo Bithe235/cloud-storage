@@ -80,41 +80,43 @@ if ! command -v cargo &> /dev/null; then
 fi
 source "$HOME/.cargo/env"
 
-echo "[1.5/5] Automatically configuring .env file..."
-if [ ! -f "$PROJECT_DIR/.env" ]; then
-cat << 'EOF' > "$PROJECT_DIR/.env"
+echo "[1.5/5] Checking and Updating .env file..."
+DOTENV="$PROJECT_DIR/.env"
+
+if [ ! -f "$DOTENV" ]; then
+    echo "Creating new .env file..."
+    cat << 'EOF' > "$DOTENV"
 PORT=8041
 GO_PORT=8040
 WORKERS=4
 CHANNEL_CAPACITY=32
 SUPERUSER_EMAIL=master@pentaract.local
 SUPERUSER_PASS=pentaract
-ACCESS_TOKEN_EXPIRE_IN_SECS=1800
-REFRESH_TOKEN_EXPIRE_IN_DAYS=14
 SECRET_KEY=8399893179:AAHplPUULPuc7G8-5sM8a-_bC35LbfuOAvk
-TELEGRAM_API_BASE_URL=https://api.telegram.org
-
-PENTARACT_API_URL=http://localhost:8041/api
 DATABASE_URL='postgresql://neondb_owner:npg_4FrYfEaQ8PeX@ep-purple-bar-a4h2jbm9-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
-
-# Centralized Cloud-Computing (Go Bridge) Telegram Mapping
-TELEGRAM_BOT_TOKEN=8399893179:AAHplPUULPuc7G8-5sM8a-_bC35LbfuOAvk
-TELEGRAM_CHAT_ID=1483501110 # Set to user's private chat ID
-MASTER_UUID=17ffbf0e-c1b2-4059-a0ce-5822aa556022
-RUST_MASTER_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Im1hc3RlckBwZW50YXJhY3QubG9jYWwiLCJleHAiOjQ5MjY1ODkwOTQsInN1YiI6IjE3ZmZiZjBlLWMxYjItNDA1OS1hMGNlLTU4MjJhYTU1NjAyMiJ9.-fSBvjSzh-eaY6EaDmxPqvVxcrd1LhmQH0sLM6VDCq4
 NEXT_CLIENT_URL=https://server.fahadakash.com
 ADMIN_CLIENT_URL=https://server.fahadakash.com
-
-# SMTP Settings
-SMTP_HOST=smtp.stackmail.com
-SMTP_PORT=465
-SMTP_USER=storage@fahadakash.com
-SMTP_PASS=Ba91374b7
 EOF
-    echo "Successfully generated .env file safely on the server!"
-else
-    echo ".env file already exists. Skipping auto-generation."
 fi
+
+# Ensure SMTP settings are present (Update or Append)
+update_env() {
+    local key=$1
+    local value=$2
+    if grep -q "^$key=" "$DOTENV"; then
+        sudo sed -i "s|^$key=.*|$key=$value|" "$DOTENV"
+    else
+        echo "$key=$value" >> "$DOTENV"
+    fi
+}
+
+echo "Injecting SMTP credentials into .env..."
+update_env "SMTP_HOST" "smtp.stackmail.com"
+update_env "SMTP_PORT" "465"
+update_env "SMTP_USER" "storage@fahadakash.com"
+update_env "SMTP_PASS" "Ba91374b7"
+
+echo ".env file is now correctly configured."
 
 echo "[2/5] Building Rust Engine natively..."
 cd "$PROJECT_DIR/pentaract"
