@@ -2,11 +2,11 @@ use reqwest::multipart;
 use uuid::Uuid;
 
 use crate::{
-    common::types::ChatId, errors::PentaractResult,
+    common::types::ChatId, errors::{PentaractError, PentaractResult},
     services::storage_workers_scheduler::StorageWorkersScheduler,
 };
 
-use super::schemas::{DownloadBodySchema, UploadBodySchema, UploadSchema};
+use super::schemas::{DownloadBodySchema, ErrorResponseSchema, UploadBodySchema, UploadSchema};
 
 pub struct TelegramBotApi<'t> {
     base_url: &'t str,
