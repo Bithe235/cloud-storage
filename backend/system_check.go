@@ -40,7 +40,7 @@ func main() {
 	}
 
 	if cfg.PentaractURL == "" {
-		cfg.PentaractURL = "http://localhost:8041/api"
+		cfg.PentaractURL = "http://127.0.0.1:8041/api"
 	}
 
 	// 2. Check Rust Connection
