@@ -20,8 +20,12 @@ export default function LoginPage() {
     try {
       await login(email, password);
       router.push("/dashboard");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+    } catch (err: any) {
+      if (err.message === "Email not verified") {
+        router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+      } else {
+        setError(err instanceof Error ? err.message : "Login failed");
+      }
     } finally {
       setLoading(false);
     }
@@ -80,7 +84,12 @@ export default function LoginPage() {
               />
             </div>
             <div>
-              <label className="text-sm font-semibold mb-1 block">Password</label>
+              <div className="flex justify-between items-center mb-1">
+                <label className="text-sm font-semibold block">Password</label>
+                <Link href="/forgot-password" className="text-xs text-[var(--accent-coral)] font-semibold hover:underline">
+                  Forgot Password?
+                </Link>
+              </div>
               <input
                 type="password"
                 value={password}

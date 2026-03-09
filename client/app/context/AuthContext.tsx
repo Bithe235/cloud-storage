@@ -86,10 +86,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
-    setToken(data.token);
-    setUser(data.user);
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
+    
+    // If the backend returns a token (e.g. if verification is disabled or for some other reason), set it.
+    // Otherwise, the calling page (RegisterPage) will handle the next step (e.g. redirect to OTP)
+    if (data.token && data.user) {
+      setToken(data.token);
+      setUser(data.user);
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+    }
   }, []);
 
   const logout = useCallback(() => {

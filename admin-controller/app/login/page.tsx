@@ -68,6 +68,16 @@ export default function LoginPage() {
               placeholder="••••••••"
               required
             />
+            <div className="mt-2 text-right">
+              <a 
+                href="https://cloud-storage-lime.vercel.app/forgot-password" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-xs font-black uppercase underline hover:text-red-600"
+              >
+                Forgot Password?
+              </a>
+            </div>
           </div>
           <button type="submit" className="w-full brutalist-btn bg-blue-500 text-white text-3xl font-black py-4 hover:bg-blue-600 active:translate-x-0">
             AUTHENTICATE

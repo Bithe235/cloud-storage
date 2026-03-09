@@ -26,7 +26,8 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await register(email, password);
-      router.push("/dashboard");
+      // Backend now sends an email and expects OTP verification instead of logging in directly.
+      router.push(`/verify-email?email=${encodeURIComponent(email)}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
     } finally {

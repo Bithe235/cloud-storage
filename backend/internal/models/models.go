@@ -5,17 +5,22 @@ import (
 )
 
 type User struct {
-	ID            string    `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
-	Email         string    `gorm:"not null" json:"email"`
-	Password      string    `gorm:"column:password_hash;not null" json:"-"`
-	PlanID        string    `gorm:"default:'plan_free'" json:"planId"`
-	PlanExpiresAt time.Time `json:"planExpiresAt"`
-	Role          string    `gorm:"default:'user'" json:"role"` // admin or user
-	IsBanned      bool      `gorm:"default:false" json:"isBanned"`
-	BanReason     string    `json:"banReason"`
-	CreatedAt     time.Time `json:"createdAt"`
-	Buckets       []Bucket  `gorm:"foreignKey:OwnerId;references:ID" json:"buckets,omitempty"`
-	ApiKeys       []ApiKey  `gorm:"foreignKey:UserId;references:ID" json:"apiKeys,omitempty"`
+	ID                            string     `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
+	Email                         string     `gorm:"not null" json:"email"`
+	Password                      string     `gorm:"column:password_hash;not null" json:"-"`
+	PlanID                        string     `gorm:"default:'plan_free'" json:"planId"`
+	PlanExpiresAt                 time.Time  `json:"planExpiresAt"`
+	Role                          string     `gorm:"default:'user'" json:"role"` // admin or user
+	IsBanned                      bool       `gorm:"default:false" json:"isBanned"`
+	BanReason                     string     `json:"banReason"`
+	IsEmailVerified               bool       `gorm:"default:false" json:"isEmailVerified"`
+	EmailVerificationOTP          *string    `json:"-"`
+	EmailVerificationOTPExpiresAt *time.Time `json:"-"`
+	PasswordResetToken            *string    `gorm:"index" json:"-"`
+	PasswordResetExpiresAt        *time.Time `json:"-"`
+	CreatedAt                     time.Time  `json:"createdAt"`
+	Buckets                       []Bucket   `gorm:"foreignKey:OwnerId;references:ID" json:"buckets,omitempty"`
+	ApiKeys                       []ApiKey   `gorm:"foreignKey:UserId;references:ID" json:"apiKeys,omitempty"`
 }
 
 type Notification struct {

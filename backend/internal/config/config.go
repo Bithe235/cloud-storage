@@ -20,6 +20,10 @@ type Config struct {
 	RustMasterToken   string
 	MaintenanceMode   bool
 	MaintenanceReason string
+	SMTPHost          string
+	SMTPPort          int
+	SMTPUser          string
+	SMTPPass          string
 }
 
 func LoadConfig() *Config {
@@ -76,6 +80,14 @@ func LoadConfig() *Config {
 		adminClientURL = "http://localhost:3002"
 	}
 
+	smtpHost := os.Getenv("SMTP_HOST")
+	smtpPort, _ := strconv.Atoi(os.Getenv("SMTP_PORT"))
+	if smtpPort == 0 {
+		smtpPort = 465
+	}
+	smtpUser := os.Getenv("SMTP_USER")
+	smtpPass := os.Getenv("SMTP_PASS")
+
 	return &Config{
 		Port:             port,
 		DatabaseURL:      dbUrl,
@@ -86,5 +98,9 @@ func LoadConfig() *Config {
 		TelegramChatID:   chatId,
 		TelegramBotToken: botToken,
 		RustMasterToken:  masterToken,
+		SMTPHost:         smtpHost,
+		SMTPPort:         smtpPort,
+		SMTPUser:         smtpUser,
+		SMTPPass:         smtpPass,
 	}
 }

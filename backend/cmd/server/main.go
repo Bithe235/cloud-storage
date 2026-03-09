@@ -93,6 +93,10 @@ func main() {
 	{
 		api.POST("/auth/register", handlers.Register)
 		api.POST("/auth/login", handlers.Login)
+		api.POST("/auth/forgot-password", handlers.ForgotPassword)
+		api.POST("/auth/reset-password", handlers.ResetPassword)
+		api.POST("/auth/verify-email", handlers.VerifyEmail)
+		api.POST("/auth/resend-verification", handlers.ResendVerificationOTP)
 
 		protected := api.Group("")
 		protected.Use(middleware.AuthGuard(), middleware.ExpiryGuard(), middleware.MaintenanceGuard())
