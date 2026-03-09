@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"pentaract-bridge/internal/config"
@@ -58,10 +59,13 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	// Generate a 6-digit OTP
-	b := make([]byte, 3) // 3 bytes = 6 hex chars
-	rand.Read(b)
-	otpCode := hex.EncodeToString(b)[:6]
+	// Generate a 6-digit numeric OTP (more user friendly)
+	otpBytes := make([]byte, 6)
+	rand.Read(otpBytes)
+	for i := 0; i < 6; i++ {
+		otpBytes[i] = uint8(int(otpBytes[i])%10 + '0')
+	}
+	otpCode := string(otpBytes)
 
 	expr := time.Now().Add(15 * time.Minute)
 
@@ -162,7 +166,7 @@ func VerifyEmail(c *gin.Context) {
 		return
 	}
 
-	if user.EmailVerificationOTP == nil || *user.EmailVerificationOTP != req.OTP {
+	if user.EmailVerificationOTP == nil || !strings.EqualFold(*user.EmailVerificationOTP, req.OTP) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid OTP code"})
 		return
 	}
@@ -213,9 +217,13 @@ func ResendVerificationOTP(c *gin.Context) {
 
 	// Rate limit check: Don't allow resending if there's still a valid OTP created < 1 minute ago (optional, but good practice)
 	// For simplicity, we just generate a new one and overwrite.
-	b := make([]byte, 3)
-	rand.Read(b)
-	otpCode := hex.EncodeToString(b)[:6]
+	// Generate a 6-digit numeric OTP
+	otpBytes := make([]byte, 6)
+	rand.Read(otpBytes)
+	for i := 0; i < 6; i++ {
+		otpBytes[i] = uint8(int(otpBytes[i])%10 + '0')
+	}
+	otpCode := string(otpBytes)
 
 	expr := time.Now().Add(15 * time.Minute)
 
