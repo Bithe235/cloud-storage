@@ -166,17 +166,16 @@ sudo systemctl restart $GO_SERVICE
 
 echo "[5/5] Injecting Nginx Configuration..."
 
-# Safe Python injection script that finds the last server block closing brace
+# Safe Python injection script using BEGIN/END markers for idempotency
 sudo python3 -c "
 import sys
+import re
 
 conf_file = '$NGINX_CONF'
 location_block = \"\"\"
-    # --- PENTARACT: GO BRIDGE API (New Project) ---
+    # --- PENTARACT: BEGIN GO BRIDGE API ---
     location /penta/ {
-        # Redirects to your Go backend on port 8040
         proxy_pass http://127.0.0.1:8040/; 
-        
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection \\\"keep-alive\\\";
@@ -184,34 +183,40 @@ location_block = \"\"\"
         proxy_cache_bypass \$http_upgrade;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
-
-        # Optimized for file storage
         client_max_body_size 100M; 
         proxy_read_timeout 300;
     }
+    # --- PENTARACT: END GO BRIDGE API ---
 \"\"\"
-#
+
 try:
     with open(conf_file, 'r') as f:
         content = f.read()
     
-    if '/penta/' not in content:
-        # Find the absolute last closing brace in the file
+    # Use markers to identify old block and replace it
+    pattern = re.compile(r'# --- PENTARACT: BEGIN GO BRIDGE API ---.*?# --- PENTARACT: END GO BRIDGE API ---', re.DOTALL)
+    
+    if pattern.search(content):
+        # Update existing block
+        new_content = pattern.sub(location_block.strip() + '\n', content)
+        with open(conf_file, 'w') as f:
+            f.write(new_content)
+        print('Successfully UPDATED /penta/ location block in NGINX.')
+    elif '/penta/' not in content:
+        # First time injection: Insert before the last closing brace
         last_brace_idx = content.rfind('}')
         if last_brace_idx != -1:
             new_content = content[:last_brace_idx] + location_block + content[last_brace_idx:]
             with open(conf_file, 'w') as f:
                 f.write(new_content)
-            print('Successfully injected /penta/ location block into NGINX.')
+            print('Successfully INJECTED /penta/ location block into NGINX.')
         else:
-            print('Warning: Could not find closing brace to auto-inject Nginx block.')
-            print(location_block)
+            print('CRITICAL: No server block found in Nginx config.')
     else:
-        print('Nginx config already natively contains the /penta/ route. Skipping injection.')
+        print('Nginx already configured with /penta/ (legacy detected). Skipping auto-injection to avoid mess.')
+
 except Exception as e:
-    print('Warning: File not found or read error:', e)
-    print('Please manually insert the following block into your nginx sites-available config:')
-    print(location_block)
+    print('Warning: Nginx configuration error:', e)
 "
 
 # Test and Restart Nginx
