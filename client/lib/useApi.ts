@@ -22,9 +22,9 @@ export function useApi() {
             }
 
             // Prepend Go Backend URI if request is an API call
-            const baseUrl = typeof window !== 'undefined' && window.location.hostname === 'server.fahadakash.com'
-                ? 'https://server.fahadakash.com/penta'
-                : 'http://localhost:8040';
+            const baseUrl = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+                ? 'http://localhost:8040'
+                : 'https://server.fahadakash.com/penta';
 
             const fetchUrl = url.startsWith("/api") ? `${baseUrl}${url}` : url;
 
