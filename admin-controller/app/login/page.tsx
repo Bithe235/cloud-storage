@@ -14,9 +14,9 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://server.fahadakash.com/penta';
     try {
-      const res = await fetch("http://localhost:8040/api/auth/login", {
+      const res = await fetch(`${apiBaseUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
