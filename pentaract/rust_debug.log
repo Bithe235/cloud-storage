@@ -40,3 +40,20 @@ Shop Props Pack v1 .1.rar
 [2m2026-03-09T12:50:23.062792Z[0m [32m INFO[0m [2mpentaract::services::cleanup_worker[0m[2m:[0m [Cleanup Worker] Running orphaned file sweep...
 [2m2026-03-09T13:42:09.674077Z[0m [31mERROR[0m [2mpentaract::common::db::errors[0m[2m:[0m error returned from database: update or delete on table "storages" violates foreign key constraint "storage_workers_storage_id_fkey" on table "storage_workers"
 [2m2026-03-09T13:42:09.675115Z[0m [31mERROR[0m [2mpentaract::errors[0m[2m:[0m unknown error
+[2m2026-03-09T13:45:49.816837Z[0m [31mERROR[0m [2mpentaract::common::db::errors[0m[2m:[0m error returned from database: update or delete on table "storages" violates foreign key constraint "storage_workers_storage_id_fkey" on table "storage_workers"
+[2m2026-03-09T13:45:49.817398Z[0m [31mERROR[0m [2mpentaract::errors[0m[2m:[0m unknown error
+root\test .txt
+[2m2026-03-09T13:46:41.456079Z[0m [31mERROR[0m [2mpentaract::services::files[0m[2m:[0m [Telegram API] 400 Bad Request
+[2m2026-03-09T13:46:42.292601Z[0m [31mERROR[0m [2mpentaract::errors[0m[2m:[0m [Telegram API] 400 Bad Request
+[2m2026-03-09T13:46:43.399108Z[0m [31mERROR[0m [2mpentaract::common::db::errors[0m[2m:[0m error returned from database: update or delete on table "storages" violates foreign key constraint "storage_workers_storage_id_fkey" on table "storage_workers"
+[2m2026-03-09T13:46:43.399610Z[0m [31mERROR[0m [2mpentaract::errors[0m[2m:[0m unknown error
+root\test .txt
+[2m2026-03-09T13:47:43.573908Z[0m [31mERROR[0m [2mpentaract::services::files[0m[2m:[0m [Telegram API] 400 Bad Request
+[2m2026-03-09T13:47:44.132843Z[0m [31mERROR[0m [2mpentaract::errors[0m[2m:[0m [Telegram API] 400 Bad Request
+[2m2026-03-09T13:47:45.555910Z[0m [31mERROR[0m [2mpentaract::common::db::errors[0m[2m:[0m error returned from database: update or delete on table "storages" violates foreign key constraint "storage_workers_storage_id_fkey" on table "storage_workers"
+[2m2026-03-09T13:47:45.556877Z[0m [31mERROR[0m [2mpentaract::errors[0m[2m:[0m unknown error
+[2m2026-03-09T13:50:23.041698Z[0m [32m INFO[0m [2mpentaract::services::cleanup_worker[0m[2m:[0m [Cleanup Worker] Running orphaned file sweep...
+root\test .txt
+[2m2026-03-09T13:50:43.078471Z[0m [34mDEBUG[0m [2mpentaract::services::storage_manager[0m[2m:[0m [TELEGRAM API] uploaded chunk with file_id "BQACAgUAAxkDAAMUaa7QMk26jZF4nLhMMU0nzctbfbMAAkocAAKloHBVI2mJzegp6xI6BA" and position "0"
+[2m2026-03-09T13:50:46.580288Z[0m [31mERROR[0m [2mpentaract::common::db::errors[0m[2m:[0m error returned from database: update or delete on table "storages" violates foreign key constraint "storage_workers_storage_id_fkey" on table "storage_workers"
+[2m2026-03-09T13:50:46.580855Z[0m [31mERROR[0m [2mpentaract::errors[0m[2m:[0m unknown error

@@ -8,6 +8,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -107,6 +108,29 @@ func testTelegram(token, chatId string) {
 		return
 	}
 	fmt.Printf("   ✅ Chat ID: ACCESSIBLE\n")
+
+	// sendDocument (Direct Test)
+	fmt.Print("   ... Testing Direct File Upload to Telegram... ")
+	url := fmt.Sprintf("https://api.telegram.org/bot%s/sendDocument", token)
+	boundary := "---TestBoundary---"
+	bodyBuf := &bytes.Buffer{}
+	fmt.Fprintf(bodyBuf, "--%s\r\n", boundary)
+	fmt.Fprintf(bodyBuf, "Content-Disposition: form-data; name=\"chat_id\"\r\n\r\n%s\r\n", chatId)
+	fmt.Fprintf(bodyBuf, "--%s\r\n", boundary)
+	fmt.Fprintf(bodyBuf, "Content-Disposition: form-data; name=\"document\"; filename=\"test.txt\"\r\n")
+	fmt.Fprintf(bodyBuf, "Content-Type: text/plain\r\n\r\n")
+	bodyBuf.WriteString("Direct Upload Check")
+	fmt.Fprintf(bodyBuf, "\r\n--%s--\r\n", boundary)
+
+	req, _ := http.NewRequest("POST", url, bodyBuf)
+	req.Header.Set("Content-Type", "multipart/form-data; boundary="+boundary)
+
+	resp, err = http.DefaultClient.Do(req)
+	if err != nil || resp.StatusCode != 200 {
+		fmt.Println("❌ FAILED")
+	} else {
+		fmt.Println("✅ SUCCESS")
+	}
 }
 
 func performE2ETest(cfg *Config) {
@@ -114,7 +138,8 @@ func performE2ETest(cfg *Config) {
 	name := fmt.Sprintf("test-%d", time.Now().Unix())
 	fmt.Printf("   a. Provisioning test storage '%s'... ", name)
 
-	payload := map[string]interface{}{"name": name, "chat_id": 0}
+	chatIdInt, _ := strconv.ParseInt(cfg.TelegramChatID, 10, 64)
+	payload := map[string]interface{}{"name": name, "chat_id": chatIdInt}
 	body, _ := json.Marshal(payload)
 	req, _ := http.NewRequest("POST", cfg.PentaractURL+"/storages", bytes.NewBuffer(body))
 	req.Header.Set("Authorization", "Bearer "+cfg.RustMasterToken)
@@ -174,7 +199,7 @@ func performE2ETest(cfg *Config) {
 	mw.WriteField("path", "root")
 	mw.Close()
 
-	uploadUrl := fmt.Sprintf("%s/storages/%s/files", cfg.PentaractURL, storageId)
+	uploadUrl := fmt.Sprintf("%s/storages/%s/files/upload", cfg.PentaractURL, storageId)
 	req, _ = http.NewRequest("POST", uploadUrl, fileBuf)
 	req.Header.Set("Authorization", "Bearer "+cfg.RustMasterToken)
 	req.Header.Set("Content-Type", mw.FormDataContentType())

@@ -64,11 +64,9 @@ impl From<PentaractError> for (StatusCode, String) {
             | PentaractError::TelegramAPIError(_)
             | PentaractError::InvalidFolderName => (StatusCode::BAD_REQUEST, e.to_string()),
             _ => {
-                tracing::error!("{e}");
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "Something went wrong".to_owned(),
-                )
+                let err_msg = e.to_string();
+                tracing::error!("{err_msg}");
+                (StatusCode::INTERNAL_SERVER_ERROR, err_msg)
             }
         }
     }
