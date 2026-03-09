@@ -33,7 +33,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             createdAt: bucket.createdAt,
             updatedAt: bucket.updatedAt,
             filesCount: bucket._count.files,
-            totalSize: bucket.files.reduce((acc, f) => acc + f.size, 0),
+            totalSize: bucket.files.reduce((acc: number, f: any) => acc + f.size, 0),
         });
     } catch (error) {
         console.error("Get bucket error:", error);

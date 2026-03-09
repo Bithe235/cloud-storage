@@ -19,14 +19,14 @@ export async function GET(request: NextRequest) {
             orderBy: { createdAt: "desc" },
         });
 
-        const result = buckets.map((b) => ({
+        const result = buckets.map((b: any) => ({
             id: b.id,
             name: b.name,
             region: b.region,
             createdAt: b.createdAt,
             updatedAt: b.updatedAt,
             filesCount: b._count.files,
-            totalSize: b.files.reduce((acc, f) => acc + f.size, 0),
+            totalSize: b.files.reduce((acc: number, f: any) => acc + f.size, 0),
         }));
 
         return Response.json(result);
