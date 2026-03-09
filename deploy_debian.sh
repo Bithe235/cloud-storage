@@ -29,21 +29,27 @@ echo "[1/5] Installing Debian System Dependencies..."
 sudo apt-get update
 sudo apt-get install -y build-essential pkg-config libssl-dev cmake curl nginx python3
 
-# Force clear old Go version if it's not 1.23 to avoid GOROOT/Path issues
-if [[ $(go version 2>/dev/null) != *"go1.23"* ]]; then
-    echo "Modernizing Go environment (Installing 1.23.6)..."
+# Force clear old Go version if it's not 1.24 to avoid GOROOT/Path issues
+if [[ $(go version 2>/dev/null) != *"go1.24"* ]]; then
+    echo "Modernizing Go environment (Installing 1.24.0)..."
     # Remove apt-installed old versions that cause conflicts
     sudo apt-get remove -y golang-go &>/dev/null || true
     sudo apt-get autoremove -y &>/dev/null || true
     
-    # Use the more reliable direct Google storage link
+    # Try different sources for reliability
     rm -f go_dist.tar.gz
-    curl -kL -o go_dist.tar.gz https://storage.googleapis.com/golang/go1.23.6.linux-amd64.tar.gz
+    echo "Downloading Go 1.24.0..."
     
-    # Validate the file is actually a gzip (not an HTML error page)
+    # Try direct Google Storage first (usually the most stable)
+    if ! curl -kL -o go_dist.tar.gz https://storage.googleapis.com/golang/go1.24.0.linux-amd64.tar.gz; then
+        echo "Primary download failed. Trying official Go source..."
+        wget --no-check-certificate -O go_dist.tar.gz https://go.dev/dl/go1.24.0.linux-amd64.tar.gz
+    fi
+    
+    # Final check before extraction
     if [[ ! $(file go_dist.tar.gz) == *"gzip compressed data"* ]]; then
-        echo "Alternative download method (using wget)..."
-        wget --no-check-certificate -O go_dist.tar.gz https://go.dev/dl/go1.23.6.linux-amd64.tar.gz
+        echo "CRITICAL ERROR: Failed to download a valid Go binary. Please check your server's internet connection."
+        exit 1
     fi
 
     sudo rm -rf /usr/local/go 
@@ -56,7 +62,7 @@ if [[ $(go version 2>/dev/null) != *"go1.23"* ]]; then
     
     export PATH=/usr/local/go/bin:$PATH
     rm -f go_dist.tar.gz
-    echo "Go 1.23.6 installed and symlinked as default."
+    echo "Go 1.24.0 installed and symlinked successfully."
 fi
 export PATH=/usr/local/go/bin:$PATH
 export GOROOT=/usr/local/go
