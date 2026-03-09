@@ -4,7 +4,7 @@ import { useApi } from "@/lib/useApi";
 import { useEffect, useState } from "react";
 
 export default function AdminSettingsPage() {
-  const { apiFetch } = useApi();
+  const { apiFetch, baseUrl } = useApi();
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(true);
@@ -96,7 +96,7 @@ export default function AdminSettingsPage() {
              <div className="space-y-4 font-mono text-sm">
                 <div className="flex justify-between border-b border-dashed border-black pb-2">
                    <span className="opacity-50">API ENDPOINT:</span>
-                   <span className="font-bold">http://localhost:8080/api</span>
+                   <span className="font-bold">{baseUrl}/api</span>
                 </div>
                 <div className="flex justify-between border-b border-dashed border-black pb-2">
                    <span className="opacity-50">MASTER TOKEN:</span>

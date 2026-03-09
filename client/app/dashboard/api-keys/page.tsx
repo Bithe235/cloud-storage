@@ -18,7 +18,7 @@ interface ApiKey {
 
 export default function ApiKeysPage() {
   const { user } = useAuth();
-  const { apiFetch } = useApi();
+  const { apiFetch, baseUrl } = useApi();
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -231,7 +231,7 @@ export default function ApiKeysPage() {
           <div className="brutalist-card-static p-6">
             <h3 className="text-lg font-bold mb-3">🔗 API Base URL</h3>
             <code className="block bg-[var(--bg-secondary)] px-4 py-2 rounded font-mono text-sm border-2 border-[#1A1A1A]">
-              {typeof window !== "undefined" ? window.location.origin : "https://your-domain.com"}/api
+              {baseUrl}/api
             </code>
           </div>
 
@@ -280,7 +280,7 @@ export default function ApiKeysPage() {
                 <p className="text-sm font-semibold mb-2">cURL — List buckets</p>
                 <div className="code-block">
                   <pre>{`curl -H "X-API-Key: YOUR_API_KEY" \\
-  ${typeof window !== "undefined" ? window.location.origin : "https://your-domain.com"}/api/buckets`}</pre>
+  ${baseUrl}/api/buckets`}</pre>
                 </div>
               </div>
 
@@ -294,7 +294,7 @@ BUCKET_ID = "your-bucket-id"
 
 with open("photo.jpg", "rb") as f:
     response = requests.post(
-        f"${typeof window !== "undefined" ? window.location.origin : "https://your-domain.com"}/api/buckets/{BUCKET_ID}/files",
+        f"${baseUrl}/api/buckets/{BUCKET_ID}/files",
         headers={"X-API-Key": API_KEY},
         files={"file": f},
         data={"path": "/images/"}
@@ -307,7 +307,7 @@ with open("photo.jpg", "rb") as f:
                 <p className="text-sm font-semibold mb-2">Node.js — Create a bucket</p>
                 <div className="code-block">
                   <pre>{`const response = await fetch(
-  "${typeof window !== "undefined" ? window.location.origin : "https://your-domain.com"}/api/buckets",
+  "${baseUrl}/api/buckets",
   {
     method: "POST",
     headers: {
