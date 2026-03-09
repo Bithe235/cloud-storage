@@ -63,12 +63,17 @@ func GetBucket(c *gin.Context) {
 	bucketId := c.Param("id")
 
 	var res BucketRes
-	err := db.DB.Table("cc_buckets").
+	userRole, _ := c.Get("userRole")
+	query := db.DB.Table("cc_buckets").
 		Select("cc_buckets.id, cc_buckets.name, cc_buckets.created_at, COUNT(files.id) as files_count, COALESCE(SUM(files.size), 0) as total_size").
 		Joins("LEFT JOIN files ON cc_buckets.pentaract_id = files.storage_id AND files.is_uploaded = true").
-		Where("cc_buckets.id = ? AND cc_buckets.owner_id = ?", bucketId, userId).
-		Group("cc_buckets.id, cc_buckets.name, cc_buckets.created_at").
-		Scan(&res).Error
+		Where("cc_buckets.id = ?", bucketId)
+
+	if userRole != "admin" {
+		query = query.Where("cc_buckets.owner_id = ?", userId)
+	}
+
+	err := query.Group("cc_buckets.id, cc_buckets.name, cc_buckets.created_at").Scan(&res).Error
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Bucket not found"})
@@ -158,7 +163,13 @@ func DeleteBucket(c *gin.Context) {
 	bucketId := c.Param("id")
 
 	var bucket models.Bucket
-	if err := db.DB.Where("id = ? AND owner_id = ?", bucketId, userId).First(&bucket).Error; err != nil {
+	userRole, _ := c.Get("userRole")
+	query := db.DB.Where("id = ?", bucketId)
+	if userRole != "admin" {
+		query = query.Where("owner_id = ?", userId)
+	}
+
+	if err := query.First(&bucket).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Bucket not found"})
 		return
 	}

@@ -3,6 +3,7 @@
 import { useApi } from "@/lib/useApi";
 import { useEffect, useState } from "react";
 import { formatBytes } from "@/utils/format";
+import Link from "next/link";
 
 interface AdminBucket {
   id: string;
@@ -63,12 +64,12 @@ export default function AdminBucketsPage() {
                     </div>
 
                     <div className="pt-4 mt-4 border-t-2 border-dashed border-black">
-                         <button 
-                         onClick={() => alert("Deep exploration feature coming soon: Browse files within user buckets.")}
-                         className="w-full brutalist-btn bg-black text-white text-xs py-2 hover:bg-zinc-800"
+                         <Link 
+                          href={`/admin/users/${user.id}/buckets`}
+                          className="w-full brutalist-btn bg-black text-white text-xs py-2 hover:bg-zinc-800 text-center block"
                          >
-                            VIEW ATOMIC FILE TREE
-                         </button>
+                            VIEW ALL STORAGE UNITS
+                         </Link>
                     </div>
                 </div>
              </div>

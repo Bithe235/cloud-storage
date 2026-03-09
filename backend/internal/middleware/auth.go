@@ -156,8 +156,11 @@ func ExpiryGuard() gin.HandlerFunc {
 			return
 		}
 
-		// Skip check for admin/JWT for now if needed, but user says 'all restrict'
-		// Let's check for all storage related actions.
+		role, _ := c.Get("userRole")
+		if role == "admin" {
+			c.Next()
+			return
+		}
 
 		var user models.User
 		if err := db.DB.Select("plan_expires_at").Where("id = ?", userId).First(&user).Error; err != nil {

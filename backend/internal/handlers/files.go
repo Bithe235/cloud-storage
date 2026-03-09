@@ -24,20 +24,38 @@ func ListFiles(c *gin.Context) {
 	bucketId := c.Param("id")
 
 	var bucket models.Bucket
-	if err := db.DB.Where("id = ? AND owner_id = ?", bucketId, userId).First(&bucket).Error; err != nil {
+	userRole, _ := c.Get("userRole")
+	query := db.DB.Where("id = ?", bucketId)
+	if userRole != "admin" {
+		query = query.Where("owner_id = ?", userId)
+	}
+
+	if err := query.First(&bucket).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Bucket not found"})
 		return
 	}
 	storageId := bucket.PentaractID
 
 	path := c.Query("path")
+	search := c.Query("search")
 	// Strip leading/trailing slashes — Rust does not accept paths starting with '/'
 	path = strings.Trim(path, "/")
 
 	cfg := config.LoadConfig()
-	url := cfg.PentaractURL + "/storages/" + storageId + "/files/tree"
-	if path != "" {
-		url += "/" + path
+	var url string
+	if search != "" {
+		// Use search endpoint if search query is provided
+		url = cfg.PentaractURL + "/storages/" + storageId + "/files/search"
+		if path != "" {
+			url += "/" + path
+		}
+		url += "?search_path=" + strings.Trim(search, "/")
+	} else {
+		// Default to tree view
+		url = cfg.PentaractURL + "/storages/" + storageId + "/files/tree"
+		if path != "" {
+			url += "/" + path
+		}
 	}
 
 	req, _ := http.NewRequest("GET", url, nil)
@@ -64,7 +82,13 @@ func UploadFile(c *gin.Context) {
 	bucketId := c.Param("id")
 
 	var bucket models.Bucket
-	if err := db.DB.Where("id = ? AND owner_id = ?", bucketId, userId).First(&bucket).Error; err != nil {
+	userRole, _ := c.Get("userRole")
+	query := db.DB.Where("id = ?", bucketId)
+	if userRole != "admin" {
+		query = query.Where("owner_id = ?", userId)
+	}
+
+	if err := query.First(&bucket).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Bucket not found"})
 		return
 	}
@@ -148,7 +172,13 @@ func DeleteFile(c *gin.Context) {
 	bucketId := c.Param("id")
 
 	var bucket models.Bucket
-	if err := db.DB.Where("id = ? AND owner_id = ?", bucketId, userId).First(&bucket).Error; err != nil {
+	userRole, _ := c.Get("userRole")
+	query := db.DB.Where("id = ?", bucketId)
+	if userRole != "admin" {
+		query = query.Where("owner_id = ?", userId)
+	}
+
+	if err := query.First(&bucket).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Bucket not found"})
 		return
 	}
@@ -188,7 +218,13 @@ func DownloadFile(c *gin.Context) {
 	bucketId := c.Param("id")
 
 	var bucket models.Bucket
-	if err := db.DB.Where("id = ? AND owner_id = ?", bucketId, userId).First(&bucket).Error; err != nil {
+	userRole, _ := c.Get("userRole")
+	query := db.DB.Where("id = ?", bucketId)
+	if userRole != "admin" {
+		query = query.Where("owner_id = ?", userId)
+	}
+
+	if err := query.First(&bucket).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Bucket not found"})
 		return
 	}
