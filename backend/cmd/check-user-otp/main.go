@@ -18,9 +18,9 @@ func main() {
 	emailArg := os.Args[1]
 
 	// 1. Load context
-	err := godotenv.Load("../.env")
+	err := godotenv.Load("../../.env")
 	if err != nil {
-		godotenv.Load(".env")
+		godotenv.Load("../.env")
 	}
 
 	dbURL := os.Getenv("DATABASE_URL")

@@ -27,9 +27,9 @@ func main() {
 	fmt.Println("=================================================")
 
 	// 1. Load Environment
-	err := godotenv.Load("../.env")
+	err := godotenv.Load("../../.env")
 	if err != nil {
-		godotenv.Load(".env")
+		godotenv.Load("../.env")
 	}
 
 	cfg := &Config{

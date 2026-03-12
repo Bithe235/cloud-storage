@@ -35,10 +35,10 @@ func ListBuckets(c *gin.Context) {
 
 	// Fetch buckets with file counts and total sizes using a join with the engine's files table
 	err := db.DB.Table("cc_buckets").
-		Select("cc_buckets.id, cc_buckets.name, cc_buckets.created_at, COUNT(files.id) as files_count, COALESCE(SUM(files.size), 0) as total_size").
+		Select("cc_buckets.id, cc_buckets.name, cc_buckets.region, cc_buckets.created_at, COUNT(files.id) as files_count, COALESCE(SUM(files.size), 0) as total_size").
 		Joins("LEFT JOIN files ON cc_buckets.pentaract_id = files.storage_id AND files.is_uploaded = true").
 		Where("cc_buckets.owner_id = ?", userId).
-		Group("cc_buckets.id, cc_buckets.name, cc_buckets.created_at").
+		Group("cc_buckets.id, cc_buckets.name, cc_buckets.region, cc_buckets.created_at").
 		Order("cc_buckets.created_at desc").
 		Scan(&res).Error
 
@@ -48,9 +48,6 @@ func ListBuckets(c *gin.Context) {
 		return
 	}
 
-	for i := range res {
-		res[i].Region = "us-east-1"
-	}
 
 	if res == nil {
 		res = []BucketRes{}
@@ -65,7 +62,7 @@ func GetBucket(c *gin.Context) {
 	var res BucketRes
 	userRole, _ := c.Get("userRole")
 	query := db.DB.Table("cc_buckets").
-		Select("cc_buckets.id, cc_buckets.name, cc_buckets.created_at, COUNT(files.id) as files_count, COALESCE(SUM(files.size), 0) as total_size").
+		Select("cc_buckets.id, cc_buckets.name, cc_buckets.region, cc_buckets.created_at, COUNT(files.id) as files_count, COALESCE(SUM(files.size), 0) as total_size").
 		Joins("LEFT JOIN files ON cc_buckets.pentaract_id = files.storage_id AND files.is_uploaded = true").
 		Where("cc_buckets.id = ?", bucketId)
 
@@ -73,7 +70,7 @@ func GetBucket(c *gin.Context) {
 		query = query.Where("cc_buckets.owner_id = ?", userId)
 	}
 
-	err := query.Group("cc_buckets.id, cc_buckets.name, cc_buckets.created_at").Scan(&res).Error
+	err := query.Group("cc_buckets.id, cc_buckets.name, cc_buckets.region, cc_buckets.created_at").Scan(&res).Error
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Bucket not found"})
@@ -84,7 +81,6 @@ func GetBucket(c *gin.Context) {
 		return
 	}
 
-	res.Region = "us-east-1"
 	c.JSON(http.StatusOK, res)
 }
 
@@ -145,6 +141,7 @@ func CreateBucket(c *gin.Context) {
 
 	bucket := models.Bucket{
 		Name:        req.Name,
+		Region:      region,
 		OwnerId:     userId,
 		PentaractID: pentaractId,
 	}

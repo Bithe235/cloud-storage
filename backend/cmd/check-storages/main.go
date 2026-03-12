@@ -13,9 +13,9 @@ import (
 
 func main() {
 	// 1. Load context
-	err := godotenv.Load("../.env")
+	err := godotenv.Load("../../.env")
 	if err != nil {
-		godotenv.Load(".env")
+		godotenv.Load("../.env")
 	}
 
 	dbURL := os.Getenv("DATABASE_URL")
@@ -31,18 +31,18 @@ func main() {
 	}
 	defer db.Close()
 
-	// 3. Query all users
-	rows, err := db.Query("SELECT email, is_email_verified FROM cc_users LIMIT 50")
+	// 3. Query storages
+	rows, err := db.Query("SELECT id, name, chat_id FROM storages ORDER BY id DESC LIMIT 5")
 	if err != nil {
 		log.Fatalf("Query error: %v", err)
 	}
 	defer rows.Close()
 
-	fmt.Println("Recent Users:")
+	fmt.Println("Recent Storages:")
 	for rows.Next() {
-		var email string
-		var verified bool
-		rows.Scan(&email, &verified)
-		fmt.Printf("- %s (Verified: %v)\n", email, verified)
+		var id, name string
+		var chatId int64
+		rows.Scan(&id, &name, &chatId)
+		fmt.Printf("- ID: %s, Name: %s, ChatID: %d\n", id, name, chatId)
 	}
 }

@@ -35,6 +35,7 @@ type Notification struct {
 type Bucket struct {
 	ID          string    `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
 	Name        string    `gorm:"not null" json:"name"`
+	Region      string    `gorm:"default:'bangladesh'" json:"region"`
 	PentaractID string    `gorm:"type:uuid;not null" json:"pentaractId"`
 	OwnerId     string    `gorm:"type:uuid;not null;index" json:"ownerId"`
 	CreatedAt   time.Time `json:"createdAt"`
