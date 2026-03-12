@@ -213,8 +213,8 @@ try:
     with open(conf_file, 'r') as f:
         content = f.read()
     
-    # Use markers to identify old block and replace it
     pattern = re.compile(r'# --- PENTARACT: BEGIN GO BRIDGE API ---.*?# --- PENTARACT: END GO BRIDGE API ---', re.DOTALL)
+    legacy_pattern = re.compile(r'location /penta/ \{.*?\}', re.DOTALL)
     
     if pattern.search(content):
         # Update existing block
@@ -222,6 +222,12 @@ try:
         with open(conf_file, 'w') as f:
             f.write(new_content)
         print('Successfully UPDATED /penta/ location block in NGINX.')
+    elif legacy_pattern.search(content):
+        # Update legacy block (without markers)
+        new_content = legacy_pattern.sub(location_block.strip() + '\n', content)
+        with open(conf_file, 'w') as f:
+            f.write(new_content)
+        print('Successfully REPLACED legacy /penta/ location block in NGINX.')
     elif '/penta/' not in content:
         # First time injection: Insert before the last closing brace
         last_brace_idx = content.rfind('}')
@@ -233,7 +239,7 @@ try:
         else:
             print('CRITICAL: No server block found in Nginx config.')
     else:
-        print('Nginx already configured with /penta/ (legacy detected). Skipping auto-injection to avoid mess.')
+        print('Warning: /penta/ detected but could not pinpoint the block. Manual update of client_max_body_size to 5G recommended.')
 
 except Exception as e:
     print('Warning: Nginx configuration error:', e)
