@@ -192,7 +192,13 @@ location_block = \"\"\"
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
         client_max_body_size 5G; 
-        proxy_read_timeout 300;
+        
+        # Optimized for 2GB+ Huge File Uploads
+        proxy_read_timeout 3600;
+        proxy_connect_timeout 3600;
+        proxy_send_timeout 3600;
+        proxy_request_buffering off;
+        proxy_buffering off;
 
         # CORS Preflight for Nginx protection
         if (\$request_method = 'OPTIONS') {
