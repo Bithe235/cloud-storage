@@ -212,7 +212,9 @@ export default function BillingPage() {
       {/* Plans */}
       <h2 className="text-2xl font-bold mb-4">Available Plans</h2>
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {billing.plans.map((plan: Plan) => {
+        {billing.plans
+          .filter((p: Plan) => p.priceBDT === 0) // TODO: Re-enable other plans (p => true) once payment system is ready
+          .map((plan: Plan) => {
           const isActive = plan.id === billing.planId;
           const credit = getProratedCredit(plan);
           const currentPlan = billing.plans.find(p => p.id === billing.planId);

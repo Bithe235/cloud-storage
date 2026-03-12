@@ -24,7 +24,7 @@ export default function BucketsPage() {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
-  const [newRegion, setNewRegion] = useState("us-east-1");
+  const [newRegion, setNewRegion] = useState("bangladesh");
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -186,6 +186,7 @@ export default function BucketsPage() {
                   onChange={(e) => setNewRegion(e.target.value)}
                   className="brutalist-input"
                 >
+                  <option value="bangladesh">Bangladesh (Chittagong)</option>
                   <option value="us-east-1">US East (Virginia)</option>
                   <option value="us-west-2">US West (Oregon)</option>
                   <option value="eu-west-1">EU (Ireland)</option>

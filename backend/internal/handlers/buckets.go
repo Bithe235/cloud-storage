@@ -120,7 +120,7 @@ func CreateBucket(c *gin.Context) {
 
 	region := req.Region
 	if region == "" {
-		region = "us-east-1"
+		region = "bangladesh"
 	}
 
 	cfg := config.LoadConfig()
