@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
+	"regexp"
 
 	"pentaract-bridge/internal/db"
 	"pentaract-bridge/internal/models"
@@ -135,6 +137,20 @@ func AdminCreateNotification(c *gin.Context) {
 		return
 	}
 
+	// If UserId is empty string, treat it as null for global broadcast
+	if req.UserId != nil && *req.UserId == "" {
+		req.UserId = nil
+	}
+
+	// Validate UUID format if provided
+	if req.UserId != nil {
+		match, _ := regexp.MatchString(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`, *req.UserId)
+		if !match {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Recipient ID format. Must be a valid UUID."})
+			return
+		}
+	}
+
 	notification := models.Notification{
 		UserId:  req.UserId,
 		Message: req.Message,
@@ -142,7 +158,8 @@ func AdminCreateNotification(c *gin.Context) {
 	}
 
 	if err := db.DB.Create(&notification).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create notification"})
+		log.Printf("Failed to create notification: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create notification: " + err.Error()})
 		return
 	}
 

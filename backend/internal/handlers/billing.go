@@ -155,6 +155,14 @@ func UpgradePlan(c *gin.Context) {
 		return
 	}
 
+	// RESTRICTION: Only plan_free is allowed for now
+	if req.PlanID != "plan_free" {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "Paid plans are currently disabled while we integrate the payment system. Please use the Free plan for now.",
+		})
+		return
+	}
+
 	currentPlan := GetPlan(user.PlanID)
 	now := time.Now()
 

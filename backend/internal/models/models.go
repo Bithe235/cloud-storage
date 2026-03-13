@@ -68,7 +68,8 @@ type ApiKey struct {
 	User        User       `gorm:"foreignKey:UserId;references:ID" json:"user,omitempty"`
 }
 
-func (User) TableName() string   { return "cc_users" }
-func (Bucket) TableName() string { return "cc_buckets" }
-func (File) TableName() string   { return "cc_files" }
-func (ApiKey) TableName() string { return "cc_api_keys" }
+func (User) TableName() string         { return "cc_users" }
+func (Bucket) TableName() string       { return "cc_buckets" }
+func (File) TableName() string         { return "cc_files" }
+func (ApiKey) TableName() string       { return "cc_api_keys" }
+func (Notification) TableName() string { return "cc_notifications" }
